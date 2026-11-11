@@ -284,7 +284,7 @@
       <div class="field"><label for="fUntil">Діє до</label><input id="fUntil" type="date"></div>
     </div>
   </div>
-  <p class="note" id="dlgErr" hidden></p>
+  <p class="note" id="dlgErr" hidden aria-live="polite"></p>
   <div class="actions">
     <button class="btn danger" type="button" id="delBtn">Видалити</button>
     <span class="spacer"></span>
@@ -304,7 +304,7 @@
   <div class="field"><label for="gDeadline">Бажана дата (необов’язково)</label><input id="gDeadline" type="date"></div>
   <div class="field"><label for="gMonthly">Скільки відкладаєте щомісяця (необов’язково, у валюті цілі)</label><input id="gMonthly" type="text" inputmode="decimal" placeholder="Для точнішого прогнозу"></div>
   <div class="field"><label>Рахувати з розділів (нічого не обрано = усі)</label><div class="chips" id="gGroups"></div></div>
-  <p class="note" id="gErr" hidden></p>
+  <p class="note" id="gErr" hidden aria-live="polite"></p>
   <div class="actions">
     <button class="btn danger" type="button" id="gDel">Видалити ціль</button>
     <span class="spacer"></span>
@@ -323,7 +323,7 @@
   <div class="field"><label for="sDay">Число місяця, коли приходить</label><input id="sDay" type="text" inputmode="numeric" placeholder="1–31"></div>
   <div class="field"><label for="sGroup">Куди зараховувати</label><select id="sGroup"></select></div>
   <div class="field"><label for="sItem">До якого запису додавати</label><select id="sItem"></select></div>
-  <p class="note" id="sErr" hidden></p>
+  <p class="note" id="sErr" hidden aria-live="polite"></p>
   <div class="actions">
     <button class="btn danger" type="button" id="sDel">Вимкнути</button>
     <span class="spacer"></span>
@@ -345,7 +345,7 @@
     <div class="field"><label for="dRate">Ставка, % річних</label><input id="dRate" type="text" inputmode="decimal" placeholder="необов’язково"></div>
     <div class="field"><label for="dUntil">Остання виплата</label><input id="dUntil" type="date"></div>
   </div>
-  <p class="note" id="dErr" hidden></p>
+  <p class="note" id="dErr" hidden aria-live="polite"></p>
   <div class="actions">
     <button class="btn danger" type="button" id="dDel">Видалити</button>
     <span class="spacer"></span>
@@ -362,7 +362,7 @@
     <div class="chips" id="eChips"></div>
     <input id="eCur" maxlength="10" autocapitalize="characters">
   </div>
-  <p class="note" id="eErr" hidden></p>
+  <p class="note" id="eErr" hidden aria-live="polite"></p>
   <div class="actions">
     <span class="spacer"></span>
     <button class="btn" type="button" id="eCancel">Скасувати</button>
@@ -982,7 +982,7 @@
 
   function openD(d) { if (typeof d.showModal === 'function') d.showModal(); else d.setAttribute('open', ''); }
   function closeD(d) { if (typeof d.close === 'function') d.close(); else d.removeAttribute('open'); }
-  function showErr(id, msg) { var e = $(id); e.hidden = false; e.textContent = msg; }
+  function showErr(id, msg) { var e = $(id); e.hidden = false; e.textContent = '⚠️ ' + msg; }
 
   // Діалог суми
   var dlg = $('dlg'), editing = null;
