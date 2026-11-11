@@ -238,7 +238,7 @@
       <p class="hint" id="ratesHint"></p>
       <div id="rates"></div>
       <div class="inline">
-        <input id="newCur" placeholder="Нова валюта, наприклад PLN" maxlength="10" autocapitalize="characters">
+        <input id="newCur" placeholder="Нова валюта, наприклад PLN" maxlength="10" autocapitalize="characters" aria-label="Нова валюта">
         <button class="btn" type="button" id="addCur">Додати</button>
       </div>
     </details>
@@ -248,7 +248,7 @@
       <p class="hint">Перейменуйте розділи або додайте свої. Прибрати можна лише порожній розділ. Позначка «ставка і термін» додає до сум поля для відсотків і дати погашення.</p>
       <div id="gman"></div>
       <div class="inline">
-        <input id="newGroup" placeholder="Новий розділ, наприклад Золото" maxlength="30">
+        <input id="newGroup" placeholder="Новий розділ, наприклад Золото" maxlength="30" aria-label="Новий розділ">
         <button class="btn" type="button" id="addGroup">Додати</button>
       </div>
       <p class="hint" id="gmanMsg"></p>
@@ -574,6 +574,8 @@
       c.setAttribute('transform', 'rotate(-90 110 110)');
       c.setAttribute('stroke', colVar(i));
       c.setAttribute('data-seg', i);
+      var total = 0; g.items.forEach(function (it) { total += it.amount * (rate(it.cur) || 1); });
+      c.setAttribute('aria-label', g.name + ': ' + fmt(total, state.disp || 'UAH'));
       c.style.strokeDasharray = '0 ' + C;
       c.style.strokeDashoffset = '0';
       svg.appendChild(c);
