@@ -55,7 +55,9 @@
   }
 
   .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-  .top h1 { margin: 0; font-size: 15px; font-weight: 500; color: var(--muted); }
+  .top h1 { margin: 0; font-size: 15px; font-weight: 500; color: var(--muted); flex: 1; }
+  .back-btn { padding: 6px 8px; font-size: 20px; line-height: 1; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+  .back-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .eye { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 14px; }
 
   .tabs { display: flex; margin-top: 14px; }
@@ -183,6 +185,7 @@
 <body>
 <main>
   <div class="top">
+    <button id="backBtn" type="button" aria-label="Назад" class="back-btn" hidden style="border: 0; background: transparent; padding: 6px 8px; font-size: 20px; cursor: pointer;">‹</button>
     <h1>Мої гроші</h1>
     <button class="eye" id="hideBtn" type="button" aria-pressed="false"></button>
   </div>
@@ -1190,6 +1193,10 @@
     }
   });
   $('hideBtn').addEventListener('click', function () { state.hide = !state.hide; save(); render(); });
+  $('backBtn').addEventListener('click', function () { if (window.history.length > 1) window.history.back(); });
+  if (window.matchMedia('(display-mode: standalone)').matches || window.matchMedia('(display-mode: fullscreen)').matches) {
+    $('backBtn').hidden = false;
+  }
   $('rates').addEventListener('change', function (e) {
     var c = e.target.dataset && e.target.dataset.rate; if (!c) return;
     var n = parseNum(e.target.value); state.rates[c] = isFinite(n) && n > 0 ? n : 0;
