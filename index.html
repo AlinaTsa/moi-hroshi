@@ -163,7 +163,7 @@
   .btn.danger { color: var(--bad); }
   .btn[disabled] { opacity: .45; cursor: not-allowed; }
 
-  dialog { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--ink); padding: 20px; width: min(92vw, 400px); max-height: 90vh; overflow: auto; }
+  dialog { position: fixed; bottom: 0; left: 0; right: 0; border: 1px solid var(--line); border-radius: 16px 16px 0 0; background: var(--surface); color: var(--ink); padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); margin: 0; width: 100%; max-width: 100vw; max-height: min(90vh, calc(100vh - 60px)); overflow: auto; }
   dialog::backdrop { background: rgba(0,0,0,0.45); }
   dialog h3 { margin: 0 0 14px; font-size: 18px; }
   .field { margin-bottom: 12px; }
