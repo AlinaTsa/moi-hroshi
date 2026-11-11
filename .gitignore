@@ -1,0 +1,10 @@
+.DS_Store
+node_modules/
+.env
+.env.*
+*.backup
+*.backup.json
+backup*.json
+backup*.txt
+test-results/
+playwright-report/

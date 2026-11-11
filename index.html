@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Мої гроші</title>
+<meta name="theme-color" content="#0F6B5C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Мої гроші">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F1F3EE; --surface: #FAFBF8; --ink: #1B2A25; --muted: #66736D; --line: #D9DED6;
+    --accent: #0F6B5C; --on-accent: #FFFFFF; --warn: #9A5B00; --bad: #B5483A;
+    --g0: #0F6B5C; --g1: #C58B1B; --g2: #3C5BA8; --g3: #B5483A; --g4: #7A5C9E; --g5: #2E8B9A; --g6: #7F8A24; --g7: #C2567E;
+    color-scheme: light;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121815; --surface: #1A221E; --ink: #E8EDE9; --muted: #98A59E; --line: #2C3731;
+      --accent: #4FC0A8; --on-accent: #0B1512; --warn: #E3A94A; --bad: #E07A6A;
+      --g0: #4FC0A8; --g1: #E0A93A; --g2: #7D9BE0; --g3: #E07A6A; --g4: #AE93D1; --g5: #5DC0D0; --g6: #B5C24A; --g7: #E58AAA;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121815; --surface: #1A221E; --ink: #E8EDE9; --muted: #98A59E; --line: #2C3731;
+    --accent: #4FC0A8; --on-accent: #0B1512; --warn: #E3A94A; --bad: #E07A6A;
+    --g0: #4FC0A8; --g1: #E0A93A; --g2: #7D9BE0; --g3: #E07A6A; --g4: #AE93D1; --g5: #5DC0D0; --g6: #B5C24A; --g7: #E58AAA;
+    color-scheme: dark;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Onest", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px; line-height: 1.45; font-variant-numeric: tabular-nums;
+    -webkit-text-size-adjust: 100%;
+  }
+  main { max-width: 560px; margin: 0 auto; padding: 20px 18px 64px; }
+  [hidden] { display: none !important; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, summary:focus-visible, svg circle:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .top h1 { margin: 0; font-size: 15px; font-weight: 500; color: var(--muted); }
+  .eye { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 14px; }
+
+  .tabs { display: flex; margin-top: 14px; }
+  .tabs .seg-ctl { width: 100%; }
+  .tabs button { flex: 1; padding: 10px 14px; font-size: 15px; }
+
+  .prompt { margin-top: 16px; border: 1px solid var(--accent); border-left-width: 5px; border-radius: 12px; background: var(--surface); padding: 14px; }
+  .prompt h3 { margin: 0 0 4px; font-size: 16px; }
+  .prompt p { margin: 0 0 10px; font-size: 14px; color: var(--muted); }
+
+  .ringwrap { position: relative; width: min(80vw, 310px); aspect-ratio: 1; margin: 14px auto 0; }
+  .ringwrap svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .ringwrap .track { fill: none; stroke: var(--line); stroke-width: 26; }
+  .ringwrap .seg { fill: none; stroke-width: 26; cursor: pointer; transition: stroke-dasharray .9s cubic-bezier(.2,.7,.2,1), stroke-dashoffset .9s cubic-bezier(.2,.7,.2,1), opacity .25s; }
+  .center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 20%; pointer-events: none; }
+  .center .lbl { font-size: 14px; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .center .amt { font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; font-size: 34px; white-space: nowrap; }
+  .center .amt.m { font-size: 27px; }
+  .center .amt.s { font-size: 21px; }
+  .center .sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  .gtabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 16px; }
+  .goal { text-align: center; margin-top: 12px; }
+  .goal .left { font-size: 15px; color: var(--muted); }
+  .goal .left b { display: block; font-size: 28px; font-weight: 800; color: var(--ink); letter-spacing: -0.01em; }
+  .goal .done { font-size: 18px; font-weight: 600; color: var(--accent); }
+  .goal .fc { font-size: 14px; color: var(--muted); margin-top: 6px; }
+  .goal .fc strong { color: var(--ink); font-weight: 600; }
+  .goal .link { margin-top: 6px; border: 0; background: transparent; color: var(--muted); text-decoration: underline; font-size: 14px; padding: 6px; }
+  .goal .setgoal { margin-top: 4px; border: 1px solid var(--accent); background: transparent; color: var(--accent); border-radius: 10px; padding: 10px 16px; font-weight: 600; }
+  .note { margin: 12px 0 0; font-size: 14px; color: var(--warn); }
+  .center-t { text-align: center; }
+
+  .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 8px; margin: 18px 0 0; padding: 0; list-style: none; }
+  .legend button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 14px; display: inline-flex; align-items: center; }
+  .legend button[aria-pressed="true"] { border-color: var(--ink); }
+  .legend i, .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 7px; }
+  .legend .none { color: var(--muted); font-size: 14px; }
+  .netline { text-align: center; font-size: 14px; color: var(--muted); margin: 12px 0 0; }
+  .netline strong { color: var(--ink); font-weight: 600; }
+
+  .showin { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 18px; font-size: 14px; color: var(--muted); }
+  .seg-ctl { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
+  .seg-ctl button { border: 0; background: transparent; padding: 7px 14px; font-size: 14px; font-weight: 500; color: var(--muted); }
+  .seg-ctl button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+
+  h2.sec { margin: 30px 0 4px; font-size: 19px; font-weight: 600; }
+  h2.sec.first { margin-top: 22px; }
+  .sechead { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 30px; }
+  .sechead h2 { margin: 0; font-size: 19px; font-weight: 600; }
+
+  .chartbox { margin-top: 10px; }
+  .chartbox svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .chartbox .ln { fill: none; stroke: var(--accent); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+  .chartbox .ar { fill: var(--accent); opacity: .12; }
+  .chartbox .gl { stroke: var(--g1); stroke-width: 1.2; stroke-dasharray: 4 3; }
+  .chartbox text { fill: var(--muted); font-size: 9.5px; font-family: inherit; }
+  .chartbox .dot { fill: var(--accent); }
+  .chartsum { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+  .chartsum strong { color: var(--ink); font-weight: 600; }
+
+  .kv, .curs .cr, .soon .cr { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 11px 2px; border-bottom: 1px solid var(--line); }
+  .curs .code { font-weight: 600; }
+  .kv .v, .curs .v, .soon .v { text-align: right; white-space: nowrap; font-weight: 500; }
+  .kv .v small, .curs .v small, .soon .v small, .kv .l small, .soon .l small { display: block; font-size: 13px; color: var(--muted); font-weight: 400; }
+  .kv .l, .soon .l { min-width: 0; overflow-wrap: anywhere; }
+  .kv.total { border-bottom: 2px solid var(--ink); font-weight: 600; }
+  .soon .late { color: var(--warn); }
+  .bad { color: var(--bad); }
+  .tiny { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+  .flow { display: flex; height: 16px; border-radius: 8px; overflow: hidden; background: var(--line); margin: 12px 0 8px; }
+  .flow span { display: block; height: 100%; }
+  .verdict { margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); font-size: 15px; }
+  .verdict.warn { border-color: var(--warn); }
+  .verdict strong { font-weight: 600; }
+  .linkbtn { border: 0; background: transparent; color: var(--accent); text-decoration: underline; font-size: 14px; padding: 4px 0; }
+
+  section.group { margin-top: 28px; }
+  .ghead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--gc); }
+  .ghead h2 { margin: 0; font-size: 19px; font-weight: 600; }
+  .ghead .sum { font-weight: 600; font-size: 18px; }
+  .row { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; text-align: left; background: transparent; border: 0; border-bottom: 1px solid var(--line); padding: 12px 2px; min-height: 52px; }
+  .row .l { min-width: 0; overflow-wrap: anywhere; }
+  .row .r { text-align: right; white-space: nowrap; }
+  .row .amt { font-weight: 500; }
+  .row .eq { display: block; font-size: 13px; color: var(--muted); }
+  .empty { margin: 10px 0 0; color: var(--muted); font-size: 15px; }
+  .add { margin-top: 10px; border: 1px dashed var(--muted); background: transparent; border-radius: 10px; padding: 9px 14px; font-size: 15px; color: var(--ink); }
+
+  details { margin-top: 36px; border-top: 1px solid var(--line); padding-top: 14px; }
+  summary { cursor: pointer; font-weight: 600; padding: 6px 0; }
+  details p.hint { color: var(--muted); font-size: 14px; margin: 8px 0 12px; }
+  .rate { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+  .rate label { width: 70px; font-weight: 500; }
+  .rate input { flex: 1; min-width: 0; }
+  .gm { display: flex; align-items: center; gap: 8px; margin: 8px 0; flex-wrap: wrap; }
+  .gm input[type="text"] { flex: 1; min-width: 120px; }
+  .gm label { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  input[type="checkbox"] { width: auto; }
+  input, textarea, select { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; }
+  textarea { min-height: 110px; font-size: 13px; }
+  .inline { display: flex; gap: 8px; margin-top: 10px; }
+  .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 14px; font-weight: 500; white-space: nowrap; }
+  .btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+  .btn.danger { color: var(--bad); }
+  .btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+  dialog { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--ink); padding: 20px; width: min(92vw, 400px); max-height: 90vh; overflow: auto; }
+  dialog::backdrop { background: rgba(0,0,0,0.45); }
+  dialog h3 { margin: 0 0 14px; font-size: 18px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 4px; }
+  .two { display: flex; gap: 10px; }
+  .two .field { flex: 1; min-width: 0; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .chip, .gtabs button { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 5px 12px; font-size: 14px; }
+  .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .gtabs button { background: var(--surface); padding: 6px 13px; }
+  .gtabs button[aria-pressed="true"] { border-color: var(--ink); font-weight: 600; }
+  .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
+  .actions .spacer { flex: 1; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <h1>Мої гроші</h1>
+    <button class="eye" id="hideBtn" type="button" aria-pressed="false"></button>
+  </div>
+  <div class="tabs"><div class="seg-ctl" id="tabs" role="group" aria-label="Розділи додатка"></div></div>
+
+  <div id="salaryPrompt"></div>
+
+  <div id="tabMoney">
+    <div class="ringwrap">
+      <svg id="ring" viewBox="0 0 220 220" role="img" aria-label="Накопичення за розділами">
+        <circle class="track" cx="110" cy="110" r="84"></circle>
+      </svg>
+      <div class="center" aria-live="polite">
+        <div class="lbl" id="ringLbl"></div>
+        <div class="amt" id="ringAmt"></div>
+        <div class="sub" id="ringSub"></div>
+      </div>
+    </div>
+
+    <div class="gtabs" id="goalTabs"></div>
+    <div class="goal" id="goal"></div>
+    <p class="note center-t" id="warn" hidden></p>
+    <p class="note center-t" id="stale" hidden></p>
+    <ul class="legend" id="legend"></ul>
+    <p class="netline" id="net" hidden></p>
+
+    <div class="showin">Показувати в
+      <div class="seg-ctl" id="seg" role="group" aria-label="Валюта показу"></div>
+    </div>
+
+    <div class="sechead">
+      <h2>Динаміка</h2>
+      <div class="seg-ctl" id="rangeSeg" role="group" aria-label="Період графіка"></div>
+    </div>
+    <div class="chartbox" id="chart"></div>
+
+    <h2 class="sec">По валютах</h2>
+    <div class="curs" id="curs"></div>
+
+    <div id="soonWrap" hidden>
+      <h2 class="sec">Найближчі терміни</h2>
+      <div class="soon" id="soon"></div>
+      <p class="tiny">Відсотки приблизні: прості, до дати погашення, без податків і капіталізації.</p>
+    </div>
+
+    <div id="groups"></div>
+
+    <details>
+      <summary>Курси валют</summary>
+      <p class="hint" id="ratesHint"></p>
+      <div id="rates"></div>
+      <div class="inline">
+        <input id="newCur" placeholder="Нова валюта, наприклад PLN" maxlength="10" autocapitalize="characters">
+        <button class="btn" type="button" id="addCur">Додати</button>
+      </div>
+    </details>
+
+    <details>
+      <summary>Мої розділи</summary>
+      <p class="hint">Перейменуйте розділи або додайте свої. Прибрати можна лише порожній розділ. Позначка «ставка і термін» додає до сум поля для відсотків і дати погашення.</p>
+      <div id="gman"></div>
+      <div class="inline">
+        <input id="newGroup" placeholder="Новий розділ, наприклад Золото" maxlength="30">
+        <button class="btn" type="button" id="addGroup">Додати</button>
+      </div>
+      <p class="hint" id="gmanMsg"></p>
+    </details>
+
+    <details>
+      <summary>Резервна копія</summary>
+      <p class="hint">Дані зберігаються лише в цьому браузері. Збережіть копію тексту собі в нотатки, щоб відновити її на іншому телефоні або після очищення браузера. Історія, зарплата й борги теж у копії.</p>
+      <textarea id="backup" aria-label="Резервна копія"></textarea>
+      <div class="inline">
+        <button class="btn" type="button" id="makeBackup">Показати копію</button>
+        <button class="btn" type="button" id="restore">Відновити з тексту</button>
+      </div>
+      <p class="hint" id="backupMsg"></p>
+    </details>
+  </div>
+
+  <div id="tabPlan" hidden></div>
+</main>
+
+<dialog id="dlg">
+  <h3 id="dlgTitle"></h3>
+  <div class="field"><label for="fLabel">Назва (необов’язково)</label><input id="fLabel" placeholder="Наприклад, Mono, Binance, ОВДП"></div>
+  <div class="field"><label for="fAmount">Сума</label><input id="fAmount" type="text" inputmode="decimal" placeholder="0"></div>
+  <div class="field"><label for="fCur">Валюта</label>
+    <div class="chips" id="chips"></div>
+    <input id="fCur" list="curList" maxlength="10" autocapitalize="characters" placeholder="або введіть свою, наприклад PLN">
+    <datalist id="curList"></datalist>
+  </div>
+  <div id="termBox" hidden>
+    <div class="two">
+      <div class="field"><label for="fRate">Ставка, % річних</label><input id="fRate" type="text" inputmode="decimal" placeholder="наприклад, 14,5"></div>
+      <div class="field"><label for="fUntil">Діє до</label><input id="fUntil" type="date"></div>
+    </div>
+  </div>
+  <p class="note" id="dlgErr" hidden></p>
+  <div class="actions">
+    <button class="btn danger" type="button" id="delBtn">Видалити</button>
+    <span class="spacer"></span>
+    <button class="btn" type="button" id="cancelBtn">Скасувати</button>
+    <button class="btn primary" type="button" id="saveBtn">Зберегти</button>
+  </div>
+</dialog>
+
+<dialog id="goalDlg">
+  <h3 id="goalTitle">Ціль накопичення</h3>
+  <div class="field"><label for="gName">На що збираєте</label><input id="gName" placeholder="Наприклад, відпустка, подушка безпеки"></div>
+  <div class="field"><label for="gAmount">Скільки потрібно</label><input id="gAmount" type="text" inputmode="decimal" placeholder="0"></div>
+  <div class="field"><label for="gCur">Валюта цілі</label>
+    <div class="chips" id="gChips"></div>
+    <input id="gCur" maxlength="10" autocapitalize="characters">
+  </div>
+  <div class="field"><label for="gDeadline">Бажана дата (необов’язково)</label><input id="gDeadline" type="date"></div>
+  <div class="field"><label for="gMonthly">Скільки відкладаєте щомісяця (необов’язково, у валюті цілі)</label><input id="gMonthly" type="text" inputmode="decimal" placeholder="Для точнішого прогнозу"></div>
+  <div class="field"><label>Рахувати з розділів (нічого не обрано = усі)</label><div class="chips" id="gGroups"></div></div>
+  <p class="note" id="gErr" hidden></p>
+  <div class="actions">
+    <button class="btn danger" type="button" id="gDel">Видалити ціль</button>
+    <span class="spacer"></span>
+    <button class="btn" type="button" id="gCancel">Скасувати</button>
+    <button class="btn primary" type="button" id="gSave">Зберегти</button>
+  </div>
+</dialog>
+
+<dialog id="salDlg">
+  <h3>Зарплата</h3>
+  <div class="field"><label for="sAmount">Скільки приходить щомісяця</label><input id="sAmount" type="text" inputmode="decimal" placeholder="0"></div>
+  <div class="field"><label for="sCur">Валюта</label>
+    <div class="chips" id="sChips"></div>
+    <input id="sCur" maxlength="10" autocapitalize="characters">
+  </div>
+  <div class="field"><label for="sDay">Число місяця, коли приходить</label><input id="sDay" type="text" inputmode="numeric" placeholder="1–31"></div>
+  <div class="field"><label for="sGroup">Куди зараховувати</label><select id="sGroup"></select></div>
+  <div class="field"><label for="sItem">До якого запису додавати</label><select id="sItem"></select></div>
+  <p class="note" id="sErr" hidden></p>
+  <div class="actions">
+    <button class="btn danger" type="button" id="sDel">Вимкнути</button>
+    <span class="spacer"></span>
+    <button class="btn" type="button" id="sCancel">Скасувати</button>
+    <button class="btn primary" type="button" id="sSave">Зберегти</button>
+  </div>
+</dialog>
+
+<dialog id="debtDlg">
+  <h3 id="debtTitle">Кредит або іпотека</h3>
+  <div class="field"><label for="dName">Назва</label><input id="dName" placeholder="Наприклад, іпотека, кредит на авто"></div>
+  <div class="field"><label for="dBalance">Скільки ще треба виплатити (залишок боргу)</label><input id="dBalance" type="text" inputmode="decimal" placeholder="0"></div>
+  <div class="field"><label for="dCur">Валюта</label>
+    <div class="chips" id="dChips"></div>
+    <input id="dCur" maxlength="10" autocapitalize="characters">
+  </div>
+  <div class="field"><label for="dPay">Платіж щомісяця</label><input id="dPay" type="text" inputmode="decimal" placeholder="0"></div>
+  <div class="two">
+    <div class="field"><label for="dRate">Ставка, % річних</label><input id="dRate" type="text" inputmode="decimal" placeholder="необов’язково"></div>
+    <div class="field"><label for="dUntil">Остання виплата</label><input id="dUntil" type="date"></div>
+  </div>
+  <p class="note" id="dErr" hidden></p>
+  <div class="actions">
+    <button class="btn danger" type="button" id="dDel">Видалити</button>
+    <span class="spacer"></span>
+    <button class="btn" type="button" id="dCancel">Скасувати</button>
+    <button class="btn primary" type="button" id="dSave">Зберегти</button>
+  </div>
+</dialog>
+
+<dialog id="expDlg">
+  <h3>Інші щомісячні витрати</h3>
+  <p class="tiny" style="margin:-6px 0 12px">Їжа, оренда, комунальні, транспорт і все, що ви витрачаєте щомісяця без кредитів. Приблизна сума теж підійде.</p>
+  <div class="field"><label for="eAmount">Сума на місяць</label><input id="eAmount" type="text" inputmode="decimal" placeholder="0"></div>
+  <div class="field"><label for="eCur">Валюта</label>
+    <div class="chips" id="eChips"></div>
+    <input id="eCur" maxlength="10" autocapitalize="characters">
+  </div>
+  <p class="note" id="eErr" hidden></p>
+  <div class="actions">
+    <span class="spacer"></span>
+    <button class="btn" type="button" id="eCancel">Скасувати</button>
+    <button class="btn primary" type="button" id="eSave">Зберегти</button>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  var KEY = 'money-mini-v1';
+  var SYM = { UAH: '₴', USD: '$', EUR: '€' };
+  var QUICK = ['UAH', 'USD', 'EUR', 'USDT', 'BTC'];
+  var FIAT3 = ['UAH', 'USD', 'EUR'];
+  var COLN = 8, MAXG = 8;
+  var R = 84, C = 2 * Math.PI * R;
+  var DAY = 86400000;
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function defaults() {
+    return {
+      rates: { USD: 42, EUR: 48.5, USDT: 42, BTC: 0, ETH: 0 },
+      ratesAt: Date.now(),
+      disp: 'UAH', hide: false,
+      goals: [], activeGoal: null,
+      hist: [],
+      salary: null, salaryLog: [],
+      expenses: { amount: 0, cur: 'UAH' },
+      debts: [],
+      groups: [
+        { id: 'cash', name: 'Готівка', cur: 'UAH', term: false, items: [] },
+        { id: 'dep', name: 'Депозит', cur: 'UAH', term: true, items: [] },
+        { id: 'fop', name: 'ФОП', cur: 'UAH', term: false, items: [] },
+        { id: 'crypto', name: 'Крипта', cur: 'USDT', term: false, items: [] },
+        { id: 'bonds', name: 'Облігації', cur: 'UAH', term: true, items: [] }
+      ]
+    };
+  }
+  function migrate(s) {
+    if (!Array.isArray(s.goals)) {
+      s.goals = [];
+      if (s.goal) { s.goals.push({ id: 'g1', name: s.goal.name || '', amount: s.goal.amount, cur: s.goal.cur, deadline: '', monthly: s.goal.monthly || 0, groups: [] }); s.activeGoal = 'g1'; }
+    }
+    delete s.goal;
+    s.goals.forEach(function (g) { if (!Array.isArray(g.groups)) g.groups = []; if (!g.deadline) g.deadline = ''; if (!g.monthly) g.monthly = 0; });
+    if (!Array.isArray(s.hist)) s.hist = [];
+    if (!s.ratesAt) s.ratesAt = Date.now();
+    if (!('salary' in s)) s.salary = null;
+    if (!Array.isArray(s.salaryLog)) s.salaryLog = [];
+    if (!s.expenses) s.expenses = { amount: 0, cur: 'UAH' };
+    if (!Array.isArray(s.debts)) s.debts = [];
+    s.groups.forEach(function (g) { if (typeof g.term !== 'boolean') g.term = (g.id === 'dep' || g.id === 'bonds'); });
+    return s;
+  }
+  var state = load();
+  var selected = null, range = 90, tab = 'money';
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) { var s = JSON.parse(raw); if (s && s.groups && s.rates) return migrate(s); }
+    } catch (e) {}
+    return defaults();
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function rate(cur) { if (cur === 'UAH') return 1; var r = Number(state.rates[cur]); return r > 0 ? r : null; }
+  function fmt(v, cur) { var d = (cur === 'BTC' || cur === 'ETH') ? 8 : 2; return Number(v).toLocaleString('uk-UA', { maximumFractionDigits: d }); }
+  function hid(s) { return state.hide ? '••••' : s; }
+  function sym(c) { return SYM[c] || c; }
+  function parseNum(s) { var n = parseFloat(String(s).replace(/\s/g, '').replace(',', '.')); return isFinite(n) ? n : NaN; }
+  function group(id) { return state.groups.filter(function (x) { return x.id === id; })[0]; }
+  function goalById(id) { return state.goals.filter(function (x) { return x.id === id; })[0]; }
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function todayStr() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function dateOf(s) { var p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function dfmt(s) { var p = s.split('-'); return p[2] + '.' + p[1] + '.' + p[0]; }
+  function daysBetween(a, b) { return Math.round((dateOf(b) - dateOf(a)) / DAY); }
+  function nextMonth(m) { var p = m.split('-'), y = +p[0], mo = +p[1] + 1; if (mo > 12) { mo = 1; y++; } return y + '-' + pad(mo); }
+  function payDate(m, day) { var p = m.split('-'), last = new Date(+p[0], +p[1], 0).getDate(); return m + '-' + pad(Math.min(day, last)); }
+  function monthLabel(m) { var p = m.split('-'); return new Date(+p[0], +p[1] - 1, 1).toLocaleDateString('uk-UA', { month: 'long', year: 'numeric' }); }
+  function monthsFromNow(n) { var d = new Date(); d.setMonth(d.getMonth() + n); return d.toLocaleDateString('uk-UA', { month: 'long', year: 'numeric' }); }
+  function colVar(i) { return 'var(--g' + (i % COLN) + ')'; }
+  function newId(p) { return p + Date.now().toString(36) + Math.floor(Math.random() * 1000); }
+
+  function groupSum(g) {
+    var sum = 0, missing = {};
+    g.items.forEach(function (it) { var r = rate(it.cur); if (r === null) missing[it.cur] = true; else sum += it.amount * r; });
+    return { uah: sum, missing: missing };
+  }
+  function totalUah() { var t = 0; state.groups.forEach(function (g) { t += groupSum(g).uah; }); return t; }
+
+  // Історія: одне значення на день, з кількостями і курсами
+  function snap() {
+    var t = totalUah();
+    if (!(t > 0) && !state.hist.length) return;
+    var q = {}, r = {};
+    state.groups.forEach(function (g) { g.items.forEach(function (it) { q[it.cur] = (q[it.cur] || 0) + it.amount; }); });
+    Object.keys(q).forEach(function (c) { var x = rate(c); if (x) r[c] = x; });
+    var d = todayStr(), ru = rate('USD'), re = rate('EUR');
+    var p = { d: d, uah: t, usd: ru ? t / ru : null, eur: re ? t / re : null, q: q, r: r };
+    var last = state.hist[state.hist.length - 1];
+    if (last && last.d === d) state.hist[state.hist.length - 1] = p; else state.hist.push(p);
+    if (state.hist.length > 900) state.hist = state.hist.slice(-900);
+  }
+  function commit() { snap(); save(); render(); }
+
+  // Розбір зміни: внески проти курсу (у гривнях)
+  function fxSplit(cutoff) {
+    var h = state.hist.filter(function (p) { return p.q && p.r && (!cutoff || dateOf(p.d) >= cutoff); });
+    if (h.length < 2) return null;
+    var flow = 0, fx = 0;
+    for (var i = 1; i < h.length; i++) {
+      var a = h[i - 1], b = h[i], keys = {};
+      Object.keys(a.q).concat(Object.keys(b.q)).forEach(function (k) { keys[k] = true; });
+      Object.keys(keys).forEach(function (c) {
+        var qa = a.q[c] || 0, qb = b.q[c] || 0;
+        var ra = c === 'UAH' ? 1 : (a.r[c] || 0), rb = c === 'UAH' ? 1 : (b.r[c] || 0);
+        if (!ra || !rb) flow += qb * rb - qa * ra;
+        else { fx += qa * (rb - ra); flow += (qb - qa) * rb; }
+      });
+    }
+    return { flow: flow, fx: fx };
+  }
+
+  // Цілі
+  function activeGoal() { return goalById(state.activeGoal) || state.goals[0] || null; }
+  function included(goal, g) { return !goal || !goal.groups.length || goal.groups.indexOf(g.id) >= 0; }
+  function goalStats(goal, sums) {
+    var base = 0;
+    state.groups.forEach(function (g, i) { if (included(goal, g)) base += sums[i].uah; });
+    var gr = rate(goal.cur);
+    if (!gr) return { goalRate: null, base: base };
+    var goalUah = goal.amount * gr;
+    return { goalRate: gr, goalUah: goalUah, base: base, progress: base / goalUah, rem: goal.amount - base / gr, remUah: goalUah - base };
+  }
+  function monthsToDeadline(goal) {
+    if (!goal.deadline) return null;
+    var dl = daysBetween(todayStr(), goal.deadline);
+    return dl <= 0 ? 0 : Math.max(1, Math.round(dl / 30.44));
+  }
+
+  // План
+  function computePlan() {
+    var s = state.salary, miss = {}, inc = 0, debt = 0, exp = 0;
+    if (s) { var r = rate(s.cur); if (r === null) miss[s.cur] = true; else inc = s.amount * r; }
+    state.debts.forEach(function (d) { var r = rate(d.cur); if (r === null) miss[d.cur] = true; else debt += d.payment * r; });
+    var e = state.expenses;
+    if (e && e.amount > 0) { var re = rate(e.cur); if (re === null) miss[e.cur] = true; else exp = e.amount * re; }
+    return { inc: inc, debt: debt, exp: exp, free: inc - debt - exp, miss: miss };
+  }
+  function debtInfo(d) {
+    var B = d.balance, P = d.payment, r = (d.rate > 0 ? d.rate : 0) / 100 / 12, n = null;
+    if (P > 0) {
+      if (r > 0) n = P > r * B ? Math.ceil(-Math.log(1 - r * B / P) / Math.log(1 + r)) : Infinity;
+      else n = Math.ceil(B / P);
+    }
+    var b12;
+    if (r > 0) b12 = B * Math.pow(1 + r, 12) - P * (Math.pow(1 + r, 12) - 1) / r; else b12 = B - 12 * P;
+    return { n: n, b12: Math.max(0, b12) };
+  }
+
+  // Зарплата: очікують підтвердження
+  function pendingSalary() {
+    var s = state.salary; if (!s) return [];
+    var today = todayStr(), cur = today.slice(0, 7), out = [], m = s.start, guard = 0;
+    while (m <= cur && guard++ < 240) {
+      if (payDate(m, s.day) <= today && !state.salaryLog.some(function (l) { return l.m === m; })) out.push(m);
+      m = nextMonth(m);
+    }
+    return out.slice(-3);
+  }
+  function renderSalaryPrompt() {
+    var box = $('salaryPrompt'), p = pendingSalary();
+    if (!p.length) { box.innerHTML = ''; return; }
+    var s = state.salary, m = p[0];
+    box.innerHTML = '<div class="prompt"><h3>Зарплата за ' + esc(monthLabel(m)) + '</h3>' +
+      '<p>Очікували ' + esc(hid(fmt(s.amount, s.cur))) + ' ' + esc(sym(s.cur)) + '. Вкажіть, скільки прийшло насправді, і я додам цю суму.' + (p.length > 1 ? ' Ще місяців, що чекають підтвердження: ' + (p.length - 1) + '.' : '') + '</p>' +
+      '<div class="inline"><input id="salReal" type="text" inputmode="decimal" aria-label="Скільки прийшло" value="' + esc(String(s.amount).replace('.', ',')) + '">' +
+      '<button class="btn primary" type="button" data-salok="' + m + '">Прийшло</button>' +
+      '<button class="btn" type="button" data-salskip="' + m + '">Пропустити</button></div>' +
+      '<p class="note" id="salErr" hidden></p></div>';
+  }
+  function applySalary(m, amount, status) {
+    var s = state.salary, g = group(s.groupId) || state.groups[0], it = null;
+    if (status === 'ok') {
+      if (s.itemId) it = g.items.filter(function (x) { return x.id === s.itemId; })[0];
+      if (!it) it = g.items.filter(function (x) { return x.cur === s.cur && x.label === 'Зарплата'; })[0];
+      if (!it) { it = { id: newId('i'), amount: 0, cur: s.cur, label: 'Зарплата' }; g.items.push(it); }
+      it.amount = Math.round((it.amount + amount) * 100000000) / 100000000;
+      if (s.cur !== 'UAH' && !(s.cur in state.rates)) state.rates[s.cur] = 0;
+    }
+    state.salaryLog.push({ m: m, amount: status === 'ok' ? amount : 0, cur: s.cur, status: status });
+    if (state.salaryLog.length > 120) state.salaryLog = state.salaryLog.slice(-120);
+    commit();
+  }
+
+  // Кільце
+  var segEls = [];
+  function buildRing() {
+    var svg = $('ring');
+    segEls.forEach(function (c) { if (c.parentNode) c.parentNode.removeChild(c); });
+    segEls = [];
+    state.groups.forEach(function (g, i) {
+      var c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      c.setAttribute('class', 'seg');
+      c.setAttribute('cx', 110); c.setAttribute('cy', 110); c.setAttribute('r', R);
+      c.setAttribute('transform', 'rotate(-90 110 110)');
+      c.setAttribute('stroke', colVar(i));
+      c.setAttribute('data-seg', i);
+      c.style.strokeDasharray = '0 ' + C;
+      c.style.strokeDashoffset = '0';
+      svg.appendChild(c);
+      segEls.push(c);
+    });
+  }
+
+  var shown = 0, raf = null;
+  function countTo(to, text) {
+    var el = $('ringAmt');
+    cancelAnimationFrame(raf);
+    if (state.hide || reduce || Math.abs(to - shown) < 0.005) { el.textContent = text(to); shown = to; sizeAmt(el); return; }
+    var from = shown, t0 = performance.now(), dur = 900;
+    function step(t) {
+      var p = Math.min((t - t0) / dur, 1), e = 1 - Math.pow(1 - p, 3);
+      shown = from + (to - from) * e;
+      el.textContent = text(shown); sizeAmt(el);
+      if (p < 1) raf = requestAnimationFrame(step);
+    }
+    raf = requestAnimationFrame(step);
+  }
+  function sizeAmt(el) { var n = el.textContent.length; el.className = 'amt' + (n > 13 ? ' s' : n > 9 ? ' m' : ''); }
+
+  function monthsText(m) { return m > 120 ? 'понад 10 років' : 'приблизно через ' + m + ' міс. (' + monthsFromNow(m) + ')'; }
+
+  function forecastFor(goal, st, pl) {
+    if (goal.monthly > 0) return { months: Math.ceil(st.rem / goal.monthly), src: 'якщо відкладати ' + hid(fmt(goal.monthly, goal.cur)) + ' ' + sym(goal.cur) + ' щомісяця' };
+    if (pl.free > 0) {
+      var fg = pl.free / st.goalRate;
+      return { months: Math.ceil(st.rem / fg), src: 'якщо відкладати вільні ' + hid(fmt(fg, goal.cur)) + ' ' + sym(goal.cur) + ' щомісяця (за вашим планом)' };
+    }
+    if (goal.groups.length) return null;
+    var h = state.hist; if (h.length < 2) return null;
+    var last = h[h.length - 1], cutoff = new Date(Date.now() - 90 * DAY), first = null;
+    for (var i = 0; i < h.length; i++) { if (dateOf(h[i].d) >= cutoff) { first = h[i]; break; } }
+    if (!first || first === last) return null;
+    var span = daysBetween(first.d, last.d);
+    if (span < 14) return null;
+    var pace = (last.uah - first.uah) / span * 30;
+    if (!(pace > 0)) return { none: true };
+    return { months: Math.ceil(st.remUah / pace), src: 'за вашим темпом останніх місяців' };
+  }
+
+  function render() {
+    var dispRate = rate(state.disp) || 1;
+    var dispCur = rate(state.disp) ? state.disp : 'UAH';
+    var tUah = 0, missingAll = {};
+    var sums = state.groups.map(function (g) {
+      var s = groupSum(g); tUah += s.uah;
+      Object.keys(s.missing).forEach(function (k) { missingAll[k] = true; });
+      return s;
+    });
+    var pl = computePlan();
+    var goal = activeGoal(), st = goal ? goalStats(goal, sums) : null;
+    var hasGoal = !!(st && st.goalRate);
+    var base = hasGoal ? st.base : tUah;
+    if (selected !== null && !(sums[selected] && sums[selected].uah > 0 && included(hasGoal ? goal : null, state.groups[selected]))) selected = null;
+    var progress = hasGoal ? st.progress : 1, fill = Math.min(progress, 1);
+
+    // Вкладки
+    $('tabs').innerHTML = [['money', 'Гроші'], ['plan', 'План']].map(function (t) {
+      return '<button type="button" data-tab="' + t[0] + '" aria-pressed="' + (tab === t[0]) + '">' + t[1] + '</button>';
+    }).join('');
+    $('tabMoney').hidden = tab !== 'money';
+    $('tabPlan').hidden = tab !== 'plan';
+    var hb = $('hideBtn');
+    hb.textContent = state.hide ? 'Показати суми' : 'Сховати суми';
+    hb.setAttribute('aria-pressed', state.hide ? 'true' : 'false');
+    renderSalaryPrompt();
+
+    // Кільце
+    var start = 0;
+    segEls.forEach(function (el, i) {
+      var inc = included(hasGoal ? goal : null, state.groups[i]);
+      var share = base > 0 && inc ? sums[i].uah / base : 0;
+      var len = share * fill * C, vis = len > 6 ? len - 3 : len;
+      el.style.strokeDasharray = Math.max(vis, 0) + ' ' + C;
+      el.style.strokeDashoffset = String(-start);
+      el.style.opacity = (selected !== null && selected !== i) ? '0.22' : '1';
+      start += len;
+    });
+    var lbl, sub, target;
+    if (selected !== null) {
+      lbl = state.groups[selected].name;
+      target = sums[selected].uah / dispRate;
+      sub = state.hide || !(base > 0) ? '' : Math.round(sums[selected].uah / base * 100) + '% від накопиченого';
+    } else {
+      lbl = hasGoal && goal.name ? goal.name : 'Накопичено';
+      target = base / dispRate;
+      if (hasGoal) sub = 'з ' + hid(fmt(st.goalUah / dispRate, dispCur)) + ' ' + sym(dispCur) + ' · ' + Math.round(progress * 100) + '%';
+      else sub = tUah > 0 ? 'усього' : 'додайте першу суму';
+    }
+    $('ringLbl').textContent = lbl;
+    $('ringSub').textContent = sub;
+    countTo(target, function (v) { return hid(fmt(v, dispCur)) + '\u00A0' + sym(dispCur); });
+
+    // Вкладки цілей
+    var gt = state.goals.map(function (g) {
+      return '<button type="button" data-goalsel="' + g.id + '" aria-pressed="' + (goal && g.id === goal.id) + '">' + esc(g.name || 'Ціль') + '</button>';
+    }).join('');
+    if (state.goals.length) gt += '<button type="button" data-goalnew>+ Ціль</button>';
+    $('goalTabs').innerHTML = gt;
+
+    // Блок цілі
+    var gh = '';
+    if (!goal) {
+      gh = '<button class="setgoal" type="button" data-goalnew>Поставити ціль</button>';
+    } else if (!st.goalRate) {
+      gh = '<div class="left">Для цілі в ' + esc(goal.cur) + ' не вказано курс.</div><button class="link" type="button" data-goaledit>Змінити ціль</button>';
+    } else {
+      if (st.rem > 0.005) {
+        gh = '<div class="left">Не вистачає до цілі<b>' + esc(hid(fmt(st.rem, goal.cur))) + ' ' + esc(sym(goal.cur)) + '</b></div>';
+        var mo = monthsToDeadline(goal);
+        if (mo === 0) gh += '<div class="fc">Бажана дата ' + esc(dfmt(goal.deadline)) + ' уже минула. Змініть її, якщо потрібно.</div>';
+        else if (mo) gh += '<div class="fc">До ' + esc(dfmt(goal.deadline)) + ' (приблизно ' + mo + ' міс.) треба відкладати <strong>' + esc(hid(fmt(st.rem / mo, goal.cur))) + ' ' + esc(sym(goal.cur)) + '</strong> щомісяця.</div>';
+        var f = forecastFor(goal, st, pl);
+        if (f && f.none) gh += '<div class="fc">За останні місяці сума не росла, тому прогноз за темпом неможливий. Додайте зарплату на вкладці «План» або вкажіть у цілі, скільки відкладаєте щомісяця.</div>';
+        else if (f) gh += '<div class="fc">Ціль буде <strong>' + esc(monthsText(f.months)) + '</strong>, ' + f.src + '.</div>';
+        else if (!mo) gh += '<div class="fc">Додайте зарплату на вкладці «План» або вкажіть у цілі, скільки відкладаєте щомісяця, і тут з’явиться прогноз.</div>';
+      } else {
+        gh = '<div class="done">Ціль досягнуто' + (st.rem < -0.005 ? ', з запасом ' + esc(hid(fmt(-st.rem, goal.cur))) + ' ' + esc(sym(goal.cur)) : '') + '</div>';
+      }
+      gh += '<button class="link" type="button" data-goaledit>Змінити ціль</button>';
+    }
+    $('goal').innerHTML = gh;
+
+    var warn = $('warn'), mk = Object.keys(missingAll);
+    if (mk.length) { warn.hidden = false; warn.textContent = 'Не враховано в підсумку: ' + mk.join(', ') + '. Вкажіть курс у розділі «Курси валют».'; }
+    else warn.hidden = true;
+
+    var hasForeign = false;
+    state.groups.forEach(function (g) { g.items.forEach(function (it) { if (it.cur !== 'UAH') hasForeign = true; }); });
+    var ageDays = Math.floor((Date.now() - state.ratesAt) / DAY);
+    var stl = $('stale');
+    if (hasForeign && ageDays >= 14) { stl.hidden = false; stl.textContent = 'Курси не оновлювались ' + ageDays + ' дн. Перевірте їх у розділі «Курси валют», щоб підсумок був точним.'; }
+    else stl.hidden = true;
+    $('ratesHint').textContent = 'Курси вводяться вручну, бо додаток працює без інтернету. Вкажіть, скільки гривень коштує 1 одиниця валюти. Якщо курс не вказано, ця сума не рахується в підсумку. Востаннє оновлено: ' + (ageDays <= 0 ? 'сьогодні' : ageDays + ' дн. тому') + '.';
+
+    $('legend').innerHTML = state.groups.map(function (g, i) {
+      if (!(sums[i].uah > 0)) return '';
+      return '<li><button type="button" data-sel="' + i + '" aria-pressed="' + (selected === i) + '"><i style="background:' + colVar(i) + '"></i>' + esc(g.name) + '</button></li>';
+    }).join('') || '<li class="none">Тут з’явиться розподіл за розділами.</li>';
+
+    // Борги і чистий капітал
+    var debtUah = 0; state.debts.forEach(function (d) { var r = rate(d.cur); if (r) debtUah += d.balance * r; });
+    var net = $('net');
+    if (state.debts.length && debtUah > 0) {
+      net.hidden = false;
+      net.innerHTML = 'Борги: <strong>' + esc(hid(fmt(debtUah / dispRate, dispCur))) + ' ' + esc(sym(dispCur)) + '</strong> · Чистий капітал: <strong>' + esc(hid(fmt((tUah - debtUah) / dispRate, dispCur))) + ' ' + esc(sym(dispCur)) + '</strong>';
+    } else net.hidden = true;
+
+    $('seg').innerHTML = FIAT3.map(function (c) {
+      return '<button type="button" data-disp="' + c + '" aria-pressed="' + (state.disp === c) + '">' + SYM[c] + ' ' + c + '</button>';
+    }).join('');
+    $('rangeSeg').innerHTML = [[30, '30 д'], [90, '90 д'], [0, 'Усе']].map(function (r) {
+      return '<button type="button" data-range="' + r[0] + '" aria-pressed="' + (range === r[0]) + '">' + r[1] + '</button>';
+    }).join('');
+
+    renderChart(dispCur, dispRate, hasGoal && !goal.groups.length ? st.goalUah : 0);
+
+    var byCur = {};
+    state.groups.forEach(function (g) { g.items.forEach(function (it) { byCur[it.cur] = (byCur[it.cur] || 0) + it.amount; }); });
+    var order = Object.keys(byCur).sort(function (a, b) {
+      var ia = QUICK.indexOf(a), ib = QUICK.indexOf(b);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b);
+    });
+    $('curs').innerHTML = order.length ? order.map(function (c) {
+      var r = rate(c), eq = '';
+      if (c !== dispCur) eq = r === null ? '<small>курс не вказано</small>' : '<small>≈ ' + esc(hid(fmt(byCur[c] * r / dispRate, dispCur))) + ' ' + esc(sym(dispCur)) + '</small>';
+      return '<div class="cr"><span class="code">' + esc(c) + '</span><span class="v">' + esc(hid(fmt(byCur[c], c))) + ' ' + esc(sym(c)) + eq + '</span></div>';
+    }).join('') : '<p class="empty">Додайте суми в розділах нижче, і тут буде видно, скільки в кожній валюті.</p>';
+
+    renderSoon();
+
+    $('groups').innerHTML = state.groups.map(function (g, i) {
+      var s = sums[i];
+      var rows = g.items.map(function (it) {
+        var r = rate(it.cur), eq = '';
+        if (it.cur !== 'UAH') eq = r === null ? '<span class="eq">курс не вказано</span>' : '<span class="eq">≈ ' + esc(hid(fmt(it.amount * r, 'UAH'))) + ' ₴</span>';
+        var term = [it.rate > 0 ? fmt(it.rate, 'UAH') + '%' : '', it.until ? 'до ' + dfmt(it.until) : ''].filter(Boolean).join(' · ');
+        return '<button class="row" type="button" data-edit="' + g.id + '|' + it.id + '"><span class="l">' + esc(it.label || it.cur) +
+          (term ? '<span class="eq">' + esc(term) + '</span>' : '') + '</span>' +
+          '<span class="r"><span class="amt">' + esc(hid(fmt(it.amount, it.cur))) + ' ' + esc(sym(it.cur)) + '</span>' + eq + '</span></button>';
+      }).join('');
+      return '<section class="group" style="--gc:' + colVar(i) + '"><div class="ghead"><h2>' + esc(g.name) + '</h2><span class="sum">' +
+        esc(hid(fmt(s.uah / dispRate, dispCur))) + ' ' + esc(sym(dispCur)) + '</span></div>' +
+        (rows || '<p class="empty">Тут поки порожньо.</p>') +
+        '<button class="add" type="button" data-add="' + g.id + '">Додати суму</button></section>';
+    }).join('');
+
+    renderRates();
+    renderGroupMan();
+    if (tab === 'plan') renderPlan(dispCur, dispRate, tUah, sums, pl, debtUah);
+  }
+
+  // Графік
+  function renderChart(dispCur, dispRate, goalUah) {
+    var box = $('chart');
+    var key = dispCur === 'USD' ? 'usd' : dispCur === 'EUR' ? 'eur' : 'uah';
+    var cutoff = range ? new Date(Date.now() - range * DAY) : null;
+    var pts = state.hist.filter(function (p) { return p[key] != null && (!cutoff || dateOf(p.d) >= cutoff); });
+    if (pts.length < 2) {
+      box.innerHTML = '<p class="empty">Графік з’явиться, коли суми будуть оновлені принаймні у два різні дні. Додаток сам запам’ятовує підсумок щодня.</p>';
+      return;
+    }
+    var W = 320, H = 150, L = 6, Rr = 6, T = 14, B = 20;
+    var t0 = dateOf(pts[0].d).getTime(), t1 = dateOf(pts[pts.length - 1].d).getTime(), span = Math.max(t1 - t0, 1);
+    var gv = goalUah > 0 ? goalUah / dispRate : null;
+    var vals = pts.map(function (p) { return p[key]; });
+    var vmin = Math.min.apply(null, vals), vmax = Math.max.apply(null, vals);
+    if (gv !== null) vmax = Math.max(vmax, gv);
+    if (vmax === vmin) vmax = vmin + 1;
+    var padV = (vmax - vmin) * 0.08; vmin = Math.max(0, vmin - padV); vmax = vmax + padV;
+    function X(p) { return L + (dateOf(p.d).getTime() - t0) / span * (W - L - Rr); }
+    function Y(v) { return T + (1 - (v - vmin) / (vmax - vmin)) * (H - T - B); }
+    var d = pts.map(function (p, i) { return (i ? 'L' : 'M') + X(p).toFixed(1) + ' ' + Y(p[key]).toFixed(1); }).join(' ');
+    var lastP = pts[pts.length - 1], firstP = pts[0];
+    var area = d + ' L' + X(lastP).toFixed(1) + ' ' + (H - B) + ' L' + X(firstP).toFixed(1) + ' ' + (H - B) + ' Z';
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Графік зміни підсумку"><path class="ar" d="' + area + '"></path>';
+    if (gv !== null) svg += '<line class="gl" x1="' + L + '" x2="' + (W - Rr) + '" y1="' + Y(gv).toFixed(1) + '" y2="' + Y(gv).toFixed(1) + '"></line><text x="' + (W - Rr) + '" y="' + (Y(gv) - 4).toFixed(1) + '" text-anchor="end">ціль</text>';
+    svg += '<path class="ln" d="' + d + '"></path><circle class="dot" cx="' + X(lastP).toFixed(1) + '" cy="' + Y(lastP[key]).toFixed(1) + '" r="3.5"></circle>' +
+      '<text x="' + L + '" y="' + (H - 5) + '">' + dfmt(firstP.d).slice(0, 5) + '</text><text x="' + (W - Rr) + '" y="' + (H - 5) + '" text-anchor="end">' + dfmt(lastP.d).slice(0, 5) + '</text></svg>';
+    var diff = lastP[key] - firstP[key], pct = firstP[key] > 0 ? diff / firstP[key] * 100 : 0;
+    var sign = diff >= 0 ? '+' : '−';
+    var summary = state.hide ? 'Зміна за період прихована.' :
+      'За цей період: <strong>' + sign + fmt(Math.abs(diff), dispCur) + ' ' + sym(dispCur) + '</strong> (' + sign + Math.abs(pct).toFixed(1).replace('.', ',') + '%).';
+    var sp = fxSplit(cutoff);
+    if (!state.hide && sp && (Math.abs(sp.flow) + Math.abs(sp.fx)) > 0.01) {
+      var sg = function (v) { return (v >= 0 ? '+' : '−') + fmt(Math.abs(v), 'UAH') + ' ₴'; };
+      summary += ' У гривнях це: нові внески і витрати <strong>' + sg(sp.flow) + '</strong>, зміна курсів і цін <strong>' + sg(sp.fx) + '</strong>.';
+    }
+    box.innerHTML = svg + '<p class="chartsum">' + summary + '</p>';
+  }
+
+  function renderSoon() {
+    var today = todayStr(), list = [];
+    state.groups.forEach(function (g) { g.items.forEach(function (it) { if (it.until) list.push({ g: g, it: it, days: daysBetween(today, it.until) }); }); });
+    list.sort(function (a, b) { return a.days - b.days; });
+    $('soonWrap').hidden = !list.length;
+    $('soon').innerHTML = list.slice(0, 8).map(function (x) {
+      var it = x.it, when;
+      if (x.days < 0) when = '<span class="late">термін минув ' + (-x.days) + ' дн. тому</span>';
+      else if (x.days === 0) when = 'сьогодні';
+      else if (x.days <= 60) when = 'через ' + x.days + ' дн.';
+      else when = 'через ~' + Math.round(x.days / 30) + ' міс.';
+      var inc = it.rate > 0 && x.days > 0 ? it.amount * it.rate / 100 * x.days / 365 : null;
+      return '<div class="cr"><span class="l">' + esc(x.g.name + (it.label ? ' · ' + it.label : '')) + '<small>до ' + dfmt(it.until) + ' · ' + when + '</small></span>' +
+        '<span class="v">' + esc(hid(fmt(it.amount, it.cur))) + ' ' + esc(sym(it.cur)) +
+        (inc !== null ? '<small>≈ +' + esc(hid(fmt(inc, it.cur))) + ' ' + esc(sym(it.cur)) + '</small>' : '') + '</span></div>';
+    }).join('');
+  }
+
+  // Вкладка «План»
+  function renderPlan(dispCur, dispRate, tUah, sums, pl, debtUah) {
+    var M = function (uah) { return esc(hid(fmt(uah / dispRate, dispCur))) + ' ' + esc(sym(dispCur)); };
+    var s = state.salary, h = '';
+
+    // Зарплата
+    h += '<h2 class="sec first">Зарплата</h2>';
+    if (s) {
+      var sg = group(s.groupId) || state.groups[0];
+      h += '<div class="kv"><span class="l">' + esc(hid(fmt(s.amount, s.cur))) + ' ' + esc(sym(s.cur)) + ' щомісяця<small>приходить ' + s.day + '-го числа, додається в «' + esc(sg.name) + '»</small></span><span class="v"><button class="linkbtn" type="button" data-saledit>Змінити</button></span></div>';
+      var log = state.salaryLog.slice(-4).reverse();
+      if (log.length) h += log.map(function (l) {
+        return '<div class="kv"><span class="l">' + esc(monthLabel(l.m)) + '</span><span class="v">' + (l.status === 'ok' ? '+' + esc(hid(fmt(l.amount, l.cur))) + ' ' + esc(sym(l.cur)) : 'пропущено') + '</span></div>';
+      }).join('');
+      h += '<p class="tiny">Додаток запитає підтвердження, коли відкриєте його після дня виплати. Гроші додаються лише після вашого «Прийшло».</p>';
+    } else {
+      h += '<p class="empty">Вкажіть зарплату, і додаток щомісяця питатиме, чи вона прийшла, та сам додаватиме її до ваших сум.</p><button class="add" type="button" data-saledit>Додати зарплату</button>';
+    }
+
+    // Куди йде зарплата
+    h += '<h2 class="sec">Куди йде зарплата</h2>';
+    if (!s || pl.inc <= 0) {
+      h += '<p class="empty">Додайте зарплату, і тут з’явиться розподіл на кредити, витрати та накопичення.</p>';
+    } else {
+      var den = Math.max(pl.inc, pl.debt + pl.exp), fr = Math.max(pl.free, 0);
+      h += '<div class="flow" aria-hidden="true"><span style="width:' + (pl.debt / den * 100) + '%;background:var(--g3)"></span><span style="width:' + (pl.exp / den * 100) + '%;background:var(--g1)"></span><span style="width:' + (fr / den * 100) + '%;background:var(--g0)"></span></div>';
+      h += '<div class="kv"><span class="l"><i class="sw" style="background:var(--g3)"></i>Кредити й іпотека</span><span class="v">' + M(pl.debt) + '</span></div>';
+      h += '<div class="kv"><span class="l"><i class="sw" style="background:var(--g1)"></i>Інші витрати <button class="linkbtn" type="button" data-expedit>' + (pl.exp > 0 ? 'змінити' : 'вказати') + '</button></span><span class="v">' + M(pl.exp) + '</span></div>';
+      h += '<div class="kv total"><span class="l"><i class="sw" style="background:var(--g0)"></i>' + (pl.free >= 0 ? 'Можна відкладати' : 'Не вистачає') + '</span><span class="v ' + (pl.free < 0 ? 'bad' : '') + '">' + M(Math.abs(pl.free)) + '</span></div>';
+      if (pl.free < 0) h += '<div class="verdict warn">Витрати й платежі перевищують зарплату. Відкладати нічого, а гроші на рахунках щомісяця зменшуватимуться.</div>';
+    }
+    var pm = Object.keys(pl.miss);
+    if (pm.length) h += '<p class="note">Для розрахунків не вистачає курсу: ' + esc(pm.join(', ')) + '. Вкажіть його на вкладці «Гроші», у розділі «Курси валют».</p>';
+
+    // Прогноз на рік
+    h += '<h2 class="sec">Прогноз на рік</h2>';
+    if (!s || pl.inc <= 0) {
+      h += '<p class="empty">Прогноз з’явиться після того, як ви додасте зарплату.</p>';
+    } else {
+      var debt12 = 0; state.debts.forEach(function (d) { var r = rate(d.cur); if (r) debt12 += debtInfo(d).b12 * r; });
+      var assets12 = tUah + 12 * pl.free, net0 = tUah - debtUah, net12 = assets12 - debt12;
+      h += '<div class="kv"><span class="l">Зарплата за 12 місяців</span><span class="v">' + M(pl.inc * 12) + '</span></div>';
+      if (pl.debt > 0) h += '<div class="kv"><span class="l">Піде на кредити й іпотеку</span><span class="v">−' + M(pl.debt * 12) + '</span></div>';
+      if (pl.exp > 0) h += '<div class="kv"><span class="l">Піде на інші витрати</span><span class="v">−' + M(pl.exp * 12) + '</span></div>';
+      h += '<div class="kv total"><span class="l">' + (pl.free >= 0 ? 'Вдасться відкласти' : 'Не вистачить') + '</span><span class="v ' + (pl.free < 0 ? 'bad' : '') + '">' + M(Math.abs(pl.free) * 12) + '</span></div>';
+      h += '<div class="kv"><span class="l">На рахунках зараз<small>через рік, якщо нічого не міняти</small></span><span class="v">' + M(tUah) + '<small>≈ ' + M(Math.max(assets12, 0)) + '</small></span></div>';
+      if (state.debts.length) {
+        h += '<div class="kv"><span class="l">Борги зараз<small>через рік, якщо платити за графіком</small></span><span class="v">' + M(debtUah) + '<small>≈ ' + M(debt12) + '</small></span></div>';
+        h += '<div class="kv"><span class="l">Чистий капітал<small>на рахунках мінус борги</small></span><span class="v">' + M(net0) + '<small>≈ ' + M(net12) + '</small></span></div>';
+      }
+      h += '<p class="tiny">Це спрощений прогноз: він не враховує відсотки по депозитах, зміну курсів і зміну зарплати чи витрат.</p>';
+    }
+
+    // Цілі
+    h += '<h2 class="sec">Цілі та скільки відкладати</h2>';
+    if (!state.goals.length) {
+      h += '<p class="empty">Поставте ціль на вкладці «Гроші», і тут буде видно, скільки відкладати щомісяця.</p>';
+    } else {
+      var totalReq = 0, dlCount = 0;
+      state.goals.forEach(function (goal) {
+        var st = goalStats(goal, sums), left = '', right = '';
+        left = esc(goal.name || 'Ціль');
+        if (!st.goalRate) { right = 'немає курсу ' + esc(goal.cur); }
+        else if (st.rem <= 0.005) { right = 'досягнуто'; }
+        else {
+          var mo = monthsToDeadline(goal);
+          right = esc(hid(fmt(st.rem, goal.cur))) + ' ' + esc(sym(goal.cur)) + '<small>ще не вистачає</small>';
+          if (mo) {
+            var reqG = st.rem / mo; totalReq += reqG * st.goalRate; dlCount++;
+            left += '<small>до ' + esc(dfmt(goal.deadline)) + ': по ' + esc(hid(fmt(reqG, goal.cur))) + ' ' + esc(sym(goal.cur)) + ' щомісяця</small>';
+          } else if (mo === 0) {
+            left += '<small>бажана дата минула</small>';
+          } else if (pl.free > 0) {
+            var mm = Math.ceil(st.rem / (pl.free / st.goalRate));
+            left += '<small>якщо відкладати всі вільні гроші: ' + esc(monthsText(mm)) + '</small>';
+          } else {
+            left += '<small>без бажаної дати</small>';
+          }
+        }
+        h += '<div class="kv"><span class="l">' + left + '</span><span class="v">' + right + '</span></div>';
+      });
+      if (dlCount && s && pl.inc > 0) {
+        if (pl.free >= totalReq) h += '<div class="verdict">Усім цілям із датами разом треба <strong>' + M(totalReq) + '</strong> на місяць. Ви можете відкладати <strong>' + M(pl.free) + '</strong>, тож вистачає, і ще лишається <strong>' + M(pl.free - totalReq) + '</strong>.</div>';
+        else h += '<div class="verdict warn">Усім цілям із датами разом треба <strong>' + M(totalReq) + '</strong> на місяць, а ви можете відкладати <strong>' + M(Math.max(pl.free, 0)) + '</strong>. Не вистачає <strong>' + M(totalReq - Math.max(pl.free, 0)) + '</strong> на місяць. Збільште внески або посуньте дати.</div>';
+      } else if (dlCount) {
+        h += '<p class="tiny">Додайте зарплату, і я порівняю потрібні внески з тим, скільки ви реально можете відкладати.</p>';
+      }
+    }
+
+    // Кредити й іпотека
+    h += '<h2 class="sec">Кредити й іпотека</h2>';
+    if (!state.debts.length) h += '<p class="empty">Якщо є кредит чи іпотека, додайте їх, і платежі врахуються в плані.</p>';
+    else {
+      h += state.debts.map(function (d) {
+        var inf = debtInfo(d), end;
+        if (d.until) end = 'до ' + dfmt(d.until);
+        else if (inf.n === null) end = '';
+        else if (inf.n === Infinity) end = 'платіж менший за відсотки, борг не зменшується';
+        else end = 'ще ≈ ' + inf.n + ' міс. (' + monthsFromNow(inf.n) + ')';
+        return '<button class="row" type="button" data-debtedit="' + d.id + '"><span class="l">' + esc(d.name || 'Кредит') +
+          '<span class="eq">платіж ' + esc(hid(fmt(d.payment, d.cur))) + ' ' + esc(sym(d.cur)) + '/міс' + (end ? ' · ' + esc(end) : '') + '</span></span>' +
+          '<span class="r"><span class="amt">' + esc(hid(fmt(d.balance, d.cur))) + ' ' + esc(sym(d.cur)) + '</span><span class="eq">залишок</span></span></button>';
+      }).join('');
+      h += '<div class="kv total"><span class="l">Усього платежів на місяць</span><span class="v">' + M(pl.debt) + '</span></div>';
+    }
+    h += '<button class="add" type="button" data-debtnew>Додати кредит або іпотеку</button>';
+    $('tabPlan').innerHTML = h;
+  }
+
+  function allCodes() {
+    var set = {};
+    Object.keys(state.rates).forEach(function (k) { set[k] = true; });
+    state.groups.forEach(function (g) { g.items.forEach(function (it) { if (it.cur !== 'UAH') set[it.cur] = true; }); });
+    state.debts.forEach(function (d) { if (d.cur !== 'UAH') set[d.cur] = true; });
+    if (state.salary && state.salary.cur !== 'UAH') set[state.salary.cur] = true;
+    return Object.keys(set);
+  }
+  function renderRates() {
+    var codes = allCodes();
+    $('rates').innerHTML = codes.map(function (c) {
+      var v = state.rates[c] > 0 ? state.rates[c] : '';
+      return '<div class="rate"><label for="r_' + esc(c) + '">1 ' + esc(c) + ' =</label><input id="r_' + esc(c) + '" data-rate="' + esc(c) + '" type="text" inputmode="decimal" value="' + esc(v) + '" placeholder="курс в гривнях"><span>₴</span></div>';
+    }).join('');
+    $('curList').innerHTML = ['UAH'].concat(codes).map(function (c) { return '<option value="' + esc(c) + '">'; }).join('');
+  }
+  function renderGroupMan() {
+    var box = $('gman');
+    if (box.contains(document.activeElement) && document.activeElement.tagName === 'INPUT' && document.activeElement.type === 'text') return;
+    box.innerHTML = state.groups.map(function (g, i) {
+      var canDel = g.items.length === 0 && state.groups.length > 1;
+      return '<div class="gm"><i class="sw" style="background:' + colVar(i) + '"></i><input type="text" data-gname="' + g.id + '" value="' + esc(g.name) + '" maxlength="30" aria-label="Назва розділу">' +
+        '<label><input type="checkbox" data-gterm="' + g.id + '"' + (g.term ? ' checked' : '') + '>ставка і термін</label>' +
+        '<button class="btn danger" type="button" data-gdel="' + g.id + '"' + (canDel ? '' : ' disabled') + '>Видалити</button></div>';
+    }).join('');
+  }
+
+  // Чіпи валют
+  var CHIPCFG = {
+    chips: { input: 'fCur', list: QUICK }, gChips: { input: 'gCur', list: FIAT3 },
+    sChips: { input: 'sCur', list: FIAT3 }, dChips: { input: 'dCur', list: FIAT3 }, eChips: { input: 'eCur', list: FIAT3 }
+  };
+  function syncChips(boxId) {
+    var c = CHIPCFG[boxId], cur = $(c.input).value.trim().toUpperCase();
+    $(boxId).innerHTML = c.list.map(function (x) { return '<button type="button" class="chip" data-chip="' + x + '" aria-pressed="' + (cur === x) + '">' + esc(SYM[x] ? SYM[x] + ' ' + x : x) + '</button>'; }).join('');
+  }
+  Object.keys(CHIPCFG).forEach(function (boxId) {
+    $(CHIPCFG[boxId].input).addEventListener('input', function () { syncChips(boxId); });
+    $(boxId).addEventListener('click', function (e) {
+      var b = e.target.closest('[data-chip]'); if (!b) return;
+      $(CHIPCFG[boxId].input).value = b.dataset.chip; syncChips(boxId);
+      if (boxId === 'sChips') fillSalItems();
+    });
+  });
+
+  function openD(d) { if (typeof d.showModal === 'function') d.showModal(); else d.setAttribute('open', ''); }
+  function closeD(d) { if (typeof d.close === 'function') d.close(); else d.removeAttribute('open'); }
+  function showErr(id, msg) { var e = $(id); e.hidden = false; e.textContent = msg; }
+
+  // Діалог суми
+  var dlg = $('dlg'), editing = null;
+  function openDialog(gid, id) {
+    var g = group(gid), it = id ? g.items.filter(function (x) { return x.id === id; })[0] : null;
+    editing = { gid: gid, id: id };
+    $('dlgTitle').textContent = (it ? 'Змінити: ' : 'Додати: ') + g.name;
+    $('fLabel').value = it ? it.label : '';
+    $('fAmount').value = it ? String(it.amount).replace('.', ',') : '';
+    $('fCur').value = it ? it.cur : g.cur;
+    $('termBox').hidden = !g.term;
+    $('fRate').value = it && it.rate > 0 ? String(it.rate).replace('.', ',') : '';
+    $('fUntil').value = it && it.until ? it.until : '';
+    $('delBtn').style.display = it ? '' : 'none';
+    $('dlgErr').hidden = true;
+    syncChips('chips');
+    openD(dlg);
+    setTimeout(function () { $('fAmount').focus(); }, 30);
+  }
+  $('saveBtn').addEventListener('click', function () {
+    var amount = parseNum($('fAmount').value), cur = $('fCur').value.trim().toUpperCase(), label = $('fLabel').value.trim();
+    if (!isFinite(amount) || amount < 0) return showErr('dlgErr', 'Введіть суму цифрами, наприклад 1500 або 0,25.');
+    if (!cur) return showErr('dlgErr', 'Оберіть валюту або введіть свою.');
+    var rt = parseNum($('fRate').value), until = $('fUntil').value;
+    var g = group(editing.gid), data = { amount: amount, cur: cur, label: label };
+    if (g.term) { data.rate = isFinite(rt) && rt > 0 ? rt : null; data.until = until || ''; }
+    if (editing.id) { var it = g.items.filter(function (x) { return x.id === editing.id; })[0]; for (var k in data) it[k] = data[k]; }
+    else { data.id = newId('i'); g.items.push(data); }
+    if (cur !== 'UAH' && !(cur in state.rates)) state.rates[cur] = 0;
+    closeD(dlg); commit();
+  });
+  $('cancelBtn').addEventListener('click', function () { closeD(dlg); });
+  $('delBtn').addEventListener('click', function () {
+    var g = group(editing.gid); g.items = g.items.filter(function (x) { return x.id !== editing.id; });
+    closeD(dlg); commit();
+  });
+
+  // Діалог цілі
+  var gdlg = $('goalDlg'), goalEditId = null, goalGroupsSel = [];
+  function renderGoalGroups() {
+    $('gGroups').innerHTML = state.groups.map(function (g) {
+      return '<button type="button" class="chip" data-ggrp="' + g.id + '" aria-pressed="' + (goalGroupsSel.indexOf(g.id) >= 0) + '">' + esc(g.name) + '</button>';
+    }).join('');
+  }
+  $('gGroups').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-ggrp]'); if (!b) return;
+    var id = b.dataset.ggrp, i = goalGroupsSel.indexOf(id);
+    if (i >= 0) goalGroupsSel.splice(i, 1); else goalGroupsSel.push(id);
+    renderGoalGroups();
+  });
+  function openGoal(id) {
+    var g = id ? goalById(id) : null;
+    goalEditId = g ? g.id : null;
+    $('goalTitle').textContent = g ? 'Змінити ціль' : 'Нова ціль';
+    $('gName').value = g ? g.name : '';
+    $('gAmount').value = g ? String(g.amount).replace('.', ',') : '';
+    $('gCur').value = g ? g.cur : (rate(state.disp) ? state.disp : 'UAH');
+    $('gDeadline').value = g ? g.deadline : '';
+    $('gMonthly').value = g && g.monthly > 0 ? String(g.monthly).replace('.', ',') : '';
+    goalGroupsSel = g ? g.groups.slice() : [];
+    $('gDel').style.display = g ? '' : 'none';
+    $('gErr').hidden = true;
+    syncChips('gChips'); renderGoalGroups();
+    openD(gdlg);
+    setTimeout(function () { $('gName').focus(); }, 30);
+  }
+  $('gSave').addEventListener('click', function () {
+    var amount = parseNum($('gAmount').value), cur = $('gCur').value.trim().toUpperCase(), monthly = parseNum($('gMonthly').value);
+    if (!isFinite(amount) || amount <= 0) return showErr('gErr', 'Вкажіть суму цілі цифрами, наприклад 5000.');
+    if (!cur) return showErr('gErr', 'Оберіть валюту цілі.');
+    if (cur !== 'UAH' && !(Number(state.rates[cur]) > 0)) return showErr('gErr', 'Спершу вкажіть курс для ' + cur + ' у розділі «Курси валют».');
+    var data = { name: $('gName').value.trim(), amount: amount, cur: cur, deadline: $('gDeadline').value || '', monthly: isFinite(monthly) && monthly > 0 ? monthly : 0, groups: goalGroupsSel.slice() };
+    if (goalEditId) { var g = goalById(goalEditId); for (var k in data) g[k] = data[k]; }
+    else { data.id = newId('g'); state.goals.push(data); state.activeGoal = data.id; }
+    if (SYM[cur]) state.disp = cur;
+    save(); closeD(gdlg); render();
+  });
+  $('gCancel').addEventListener('click', function () { closeD(gdlg); });
+  $('gDel').addEventListener('click', function () {
+    state.goals = state.goals.filter(function (g) { return g.id !== goalEditId; });
+    if (state.activeGoal === goalEditId) state.activeGoal = state.goals[0] ? state.goals[0].id : null;
+    save(); closeD(gdlg); render();
+  });
+
+  // Діалог зарплати
+  var sdlg = $('salDlg');
+  function fillSalItems(preferId) {
+    var gid = $('sGroup').value, cur = $('sCur').value.trim().toUpperCase(), g = group(gid), sel = $('sItem');
+    var opts = '<option value="">Новий запис «Зарплата»</option>';
+    if (g) g.items.forEach(function (it) { if (it.cur === cur) opts += '<option value="' + esc(it.id) + '">' + esc(it.label || it.cur) + ' (' + esc(fmt(it.amount, it.cur)) + ' ' + esc(sym(it.cur)) + ')</option>'; });
+    sel.innerHTML = opts;
+    if (preferId) sel.value = preferId;
+  }
+  function openSalary() {
+    var s = state.salary;
+    $('sAmount').value = s ? String(s.amount).replace('.', ',') : '';
+    $('sCur').value = s ? s.cur : (rate(state.disp) ? state.disp : 'UAH');
+    $('sDay').value = s ? s.day : '';
+    $('sGroup').innerHTML = state.groups.map(function (g) { return '<option value="' + esc(g.id) + '">' + esc(g.name) + '</option>'; }).join('');
+    $('sGroup').value = s ? s.groupId : (group('cash') ? 'cash' : state.groups[0].id);
+    fillSalItems(s ? s.itemId : null);
+    $('sDel').style.display = s ? '' : 'none';
+    $('sErr').hidden = true;
+    syncChips('sChips');
+    openD(sdlg);
+    setTimeout(function () { $('sAmount').focus(); }, 30);
+  }
+  $('sGroup').addEventListener('change', function () { fillSalItems(); });
+  $('sSave').addEventListener('click', function () {
+    var amount = parseNum($('sAmount').value), cur = $('sCur').value.trim().toUpperCase(), day = parseInt($('sDay').value, 10);
+    if (!isFinite(amount) || amount <= 0) return showErr('sErr', 'Вкажіть суму зарплати цифрами, наприклад 1000.');
+    if (!cur) return showErr('sErr', 'Оберіть валюту.');
+    if (!(day >= 1 && day <= 31)) return showErr('sErr', 'Вкажіть число місяця від 1 до 31.');
+    if (cur !== 'UAH' && !(cur in state.rates)) state.rates[cur] = 0;
+    var old = state.salary;
+    state.salary = { amount: amount, cur: cur, day: day, groupId: $('sGroup').value, itemId: $('sItem').value || null, start: old ? old.start : todayStr().slice(0, 7) };
+    closeD(sdlg); commit();
+  });
+  $('sCancel').addEventListener('click', function () { closeD(sdlg); });
+  $('sDel').addEventListener('click', function () { state.salary = null; closeD(sdlg); commit(); });
+
+  // Діалог боргу
+  var ddlg = $('debtDlg'), debtEditId = null;
+  function openDebt(id) {
+    var d = id ? state.debts.filter(function (x) { return x.id === id; })[0] : null;
+    debtEditId = d ? d.id : null;
+    $('debtTitle').textContent = d ? 'Змінити кредит або іпотеку' : 'Новий кредит або іпотека';
+    $('dName').value = d ? d.name : '';
+    $('dBalance').value = d ? String(d.balance).replace('.', ',') : '';
+    $('dCur').value = d ? d.cur : 'UAH';
+    $('dPay').value = d ? String(d.payment).replace('.', ',') : '';
+    $('dRate').value = d && d.rate > 0 ? String(d.rate).replace('.', ',') : '';
+    $('dUntil').value = d && d.until ? d.until : '';
+    $('dDel').style.display = d ? '' : 'none';
+    $('dErr').hidden = true;
+    syncChips('dChips');
+    openD(ddlg);
+    setTimeout(function () { $('dName').focus(); }, 30);
+  }
+  $('dSave').addEventListener('click', function () {
+    var bal = parseNum($('dBalance').value), pay = parseNum($('dPay').value), rt = parseNum($('dRate').value), cur = $('dCur').value.trim().toUpperCase();
+    if (!isFinite(bal) || bal < 0) return showErr('dErr', 'Вкажіть залишок боргу цифрами.');
+    if (!isFinite(pay) || pay < 0) return showErr('dErr', 'Вкажіть щомісячний платіж цифрами.');
+    if (!cur) return showErr('dErr', 'Оберіть валюту.');
+    var data = { name: $('dName').value.trim(), balance: bal, cur: cur, payment: pay, rate: isFinite(rt) && rt > 0 ? rt : 0, until: $('dUntil').value || '' };
+    if (debtEditId) { var d = state.debts.filter(function (x) { return x.id === debtEditId; })[0]; for (var k in data) d[k] = data[k]; }
+    else { data.id = newId('d'); state.debts.push(data); }
+    if (cur !== 'UAH' && !(cur in state.rates)) state.rates[cur] = 0;
+    closeD(ddlg); commit();
+  });
+  $('dCancel').addEventListener('click', function () { closeD(ddlg); });
+  $('dDel').addEventListener('click', function () { state.debts = state.debts.filter(function (x) { return x.id !== debtEditId; }); closeD(ddlg); commit(); });
+
+  // Діалог витрат
+  var edlg = $('expDlg');
+  function openExp() {
+    var e = state.expenses;
+    $('eAmount').value = e && e.amount > 0 ? String(e.amount).replace('.', ',') : '';
+    $('eCur').value = e && e.cur ? e.cur : (rate(state.disp) ? state.disp : 'UAH');
+    $('eErr').hidden = true;
+    syncChips('eChips');
+    openD(edlg);
+    setTimeout(function () { $('eAmount').focus(); }, 30);
+  }
+  $('eSave').addEventListener('click', function () {
+    var a = parseNum($('eAmount').value || '0'), cur = $('eCur').value.trim().toUpperCase();
+    if (!isFinite(a) || a < 0) return showErr('eErr', 'Вкажіть суму цифрами.');
+    if (!cur) return showErr('eErr', 'Оберіть валюту.');
+    if (cur !== 'UAH' && !(cur in state.rates)) state.rates[cur] = 0;
+    state.expenses = { amount: a, cur: cur };
+    closeD(edlg); commit();
+  });
+  $('eCancel').addEventListener('click', function () { closeD(edlg); });
+
+  // Події сторінки
+  document.addEventListener('click', function (e) {
+    var seg = e.target.closest && e.target.closest('[data-seg]');
+    if (seg) { var i = Number(seg.getAttribute('data-seg')); selected = selected === i ? null : i; render(); return; }
+    var t = e.target.closest('button'); if (!t) return;
+    var d = t.dataset;
+    if (d.tab) { tab = d.tab; render(); }
+    else if (d.add) openDialog(d.add, null);
+    else if (d.edit) { var p = d.edit.split('|'); openDialog(p[0], p[1]); }
+    else if (d.disp) { state.disp = d.disp; save(); render(); }
+    else if (d.range !== undefined) { range = Number(d.range); render(); }
+    else if (d.sel !== undefined) { var k = Number(d.sel); selected = selected === k ? null : k; render(); }
+    else if (d.goalsel) { state.activeGoal = d.goalsel; selected = null; save(); render(); }
+    else if (t.hasAttribute('data-goalnew')) openGoal(null);
+    else if (t.hasAttribute('data-goaledit')) { var ag = activeGoal(); if (ag) openGoal(ag.id); }
+    else if (t.hasAttribute('data-saledit')) openSalary();
+    else if (t.hasAttribute('data-expedit')) openExp();
+    else if (d.debtedit) openDebt(d.debtedit);
+    else if (t.hasAttribute('data-debtnew')) openDebt(null);
+    else if (d.salok) {
+      var v = parseNum($('salReal').value);
+      if (!isFinite(v) || v <= 0) { var er = $('salErr'); er.hidden = false; er.textContent = 'Вкажіть суму цифрами. Якщо гроші не прийшли, натисніть «Пропустити».'; return; }
+      applySalary(d.salok, v, 'ok');
+    }
+    else if (d.salskip) applySalary(d.salskip, 0, 'skip');
+    else if (d.gdel) {
+      var g = group(d.gdel);
+      if (g && g.items.length === 0 && state.groups.length > 1) {
+        state.groups = state.groups.filter(function (x) { return x.id !== d.gdel; });
+        state.goals.forEach(function (go) { go.groups = go.groups.filter(function (x) { return x !== d.gdel; }); });
+        if (state.salary && state.salary.groupId === d.gdel) state.salary.groupId = state.groups[0].id;
+        selected = null; buildRing(); snap(); save(); render();
+      }
+    }
+  });
+  $('hideBtn').addEventListener('click', function () { state.hide = !state.hide; save(); render(); });
+  $('rates').addEventListener('change', function (e) {
+    var c = e.target.dataset && e.target.dataset.rate; if (!c) return;
+    var n = parseNum(e.target.value); state.rates[c] = isFinite(n) && n > 0 ? n : 0;
+    state.ratesAt = Date.now(); commit();
+  });
+  $('addCur').addEventListener('click', function () {
+    var inp = $('newCur'), c = inp.value.trim().toUpperCase();
+    if (c && c !== 'UAH' && !(c in state.rates)) { state.rates[c] = 0; save(); render(); }
+    inp.value = '';
+  });
+  $('gman').addEventListener('change', function (e) {
+    var t = e.target, g;
+    if (t.dataset.gname) { g = group(t.dataset.gname); var v = t.value.trim(); if (g && v) { g.name = v; save(); render(); } else if (g) t.value = g.name; }
+    else if (t.dataset.gterm) { g = group(t.dataset.gterm); if (g) { g.term = t.checked; save(); render(); } }
+  });
+  $('addGroup').addEventListener('click', function () {
+    var inp = $('newGroup'), v = inp.value.trim(), msg = $('gmanMsg');
+    if (!v) { msg.textContent = 'Введіть назву розділу.'; return; }
+    if (state.groups.length >= MAXG) { msg.textContent = 'Максимум ' + MAXG + ' розділів.'; return; }
+    state.groups.push({ id: newId('x'), name: v, cur: 'UAH', term: false, items: [] });
+    inp.value = ''; msg.textContent = 'Розділ додано.';
+    buildRing(); save(); render();
+  });
+  $('makeBackup').addEventListener('click', function () {
+    var ta = $('backup'); ta.value = JSON.stringify(state); ta.focus(); ta.select();
+    $('backupMsg').textContent = 'Скопіюйте цей текст і збережіть у нотатках.';
+  });
+  $('restore').addEventListener('click', function () {
+    var msg = $('backupMsg');
+    try {
+      var s = JSON.parse($('backup').value);
+      if (!s || !Array.isArray(s.groups) || !s.rates) throw new Error('bad');
+      state = migrate(s); selected = null; buildRing(); save(); render(); msg.textContent = 'Дані відновлено.';
+    } catch (err) { msg.textContent = 'Не вдалося прочитати текст. Вставте копію повністю, без змін.'; }
+  });
+
+  buildRing();
+  snap(); save();
+  render();
+  if (!reduce) {
+    var snapshot = segEls.map(function (el) { return [el.style.strokeDasharray, el.style.strokeDashoffset]; });
+    segEls.forEach(function (el) { el.style.transition = 'none'; el.style.strokeDasharray = '0 ' + C; el.style.strokeDashoffset = '0'; });
+    shown = 0;
+    requestAnimationFrame(function () { requestAnimationFrame(function () {
+      segEls.forEach(function (el, i) { el.style.transition = ''; if (snapshot[i]) { el.style.strokeDasharray = snapshot[i][0]; el.style.strokeDashoffset = snapshot[i][1]; } });
+      render();
+    }); });
+  }
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  }
+})();
+</script>
+</body>
+</html>
