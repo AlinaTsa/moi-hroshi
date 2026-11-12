@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#F3F4F6">
+<title>Мої гроші: прототип v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root, [data-look="a"] {
+    --bg:#F3F4F6; --card:#FFFFFF; --ink:#1B2430; --muted:#5F6B7A; --line:#E6E9ED; --track:#DCE1E7;
+    --accent:#1F4DB8; --on-accent:#FFFFFF; --good:#1D7A4F; --bad:#B3402F; --warn:#9A5B00; --warn-bg:#FBF1E0;
+    --p1:#1F4DB8; --p2:#4C74D2; --p3:#7F9FE3; --p4:#AFC3EE; --p5:#D3DEF5;
+    --g1:#1F4DB8; --g2:#0E7C86; --g3:#B0642D; --g4:#7A4FB5; --t1:#E6EDFB; --t2:#DDF0F1; --t3:#F6E9DE; --t4:#EEE6F8; --soft:#EEF2F8; --sel:#E6EDFB;
+  }
+  [data-look="b"] {
+    --bg:#0E1217; --card:#171D25; --ink:#E8EDF2; --muted:#98A5B3; --line:#262F3A; --track:#2A3440;
+    --accent:#7FB2FF; --on-accent:#0E1217; --good:#6FD3A0; --bad:#F08A7A; --warn:#F2B35A; --warn-bg:#2E2616;
+    --p1:#7FB2FF; --p2:#5E8FD6; --p3:#476FAD; --p4:#335185; --p5:#26406B;
+    --g1:#7FB2FF; --g2:#8FD6C0; --g3:#F2B35A; --g4:#C3A6F0; --t1:#1E2C42; --t2:#1D3A36; --t3:#3A2F1B; --t4:#2E2542; --soft:#1D252F; --sel:#222C38;
+  }
+  [data-look="c"] {
+    --bg:#F4F3F1; --card:#FFFFFF; --ink:#202020; --muted:#666460; --line:#E8E6E3; --track:#DEDBD7;
+    --accent:#1F6F5E; --on-accent:#FFFFFF; --good:#1F6F5E; --bad:#A63A2A; --warn:#8F5A00; --warn-bg:#F8EFDD;
+    --p1:#2B2B2B; --p2:#5A5A58; --p3:#8A8885; --p4:#B9B6B2; --p5:#DAD7D3;
+    --g1:#1F6F5E; --g2:#A5622B; --g3:#5A5A58; --g4:#7A4FB5; --t1:#E2EFEB; --t2:#F3E7DD; --t3:#ECEAE7; --t4:#EEE6F8; --soft:#F3F1EE; --sel:#ECE9E5;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; -webkit-text-size-adjust: 100%; }
+  button, select, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .app { height: 100dvh; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; background: var(--bg); position: relative; overflow: hidden; }
+  #view { flex: 1; min-height: 0; overflow-y: auto; padding: calc(env(safe-area-inset-top, 0px) + 16px) 20px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .tabs { display: flex; background: var(--card); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .tab { flex: 1; min-height: 56px; border: 0; background: transparent; color: var(--muted); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; font-weight: 500; }
+  .tab[aria-current="page"] { color: var(--accent); font-weight: 600; }
+  .tab svg { width: 23px; height: 23px; }
+  h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  h2 { margin: 0; font-size: 19px; font-weight: 600; }
+  .note { font-size: 13px; color: var(--muted); margin: 0 2px; line-height: 1.4; }
+  .sec { display: flex; align-items: baseline; justify-content: space-between; margin: 4px 2px -4px; }
+  .sec span { font-size: 13px; color: var(--muted); }
+  .head { display: flex; align-items: center; gap: 12px; }
+  .head h1 { flex: 1; min-width: 0; }
+  .back, .iconbtn { width: 44px; height: 44px; border-radius: 22px; border: 1px solid var(--line); background: var(--card); display: flex; align-items: center; justify-content: center; flex: none; }
+
+  .hero-row { position: relative; display: flex; align-items: center; justify-content: space-between; height: 44px; }
+  .hero-row .lbl { font-size: 15px; color: var(--muted); }
+  .cur-btn { height: 44px; padding: 0 4px 0 12px; border: 0; background: transparent; color: var(--muted); display: flex; align-items: center; gap: 4px; font-size: 16px; font-weight: 500; }
+  .menu { position: absolute; right: 0; top: 44px; width: 168px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 4px; z-index: 5; }
+  .menu button { width: 100%; height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; display: flex; align-items: center; justify-content: space-between; font-size: 15px; }
+  .menu button[aria-checked="true"] { background: var(--sel); }
+  .total { font-size: 46px; font-weight: 600; letter-spacing: -0.025em; line-height: 1.1; }
+  .total.sm { font-size: 38px; } .total.xs { font-size: 32px; }
+  .delta { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 14px; font-weight: 500; color: var(--good); }
+  .sub { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+  .card { background: var(--card); border-radius: 18px; padding: 14px 16px; }
+  .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--track); margin-bottom: 12px; }
+  .bar span { display: block; height: 8px; }
+  .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; }
+  .two > div { min-width: 0; }
+  .pl-n { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); }
+  .pl-n i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; flex: none; }
+  .pl-a { font-size: 18px; font-weight: 500; margin-top: 1px; white-space: nowrap; } .pl-a.sm { font-size: 15px; }
+  .big-a { font-size: 22px; font-weight: 600; margin-top: 1px; white-space: nowrap; } .big-a.sm { font-size: 18px; }
+
+  .acc { width: 100%; text-align: left; border: 0; background: var(--card); border-radius: 18px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .acc-top { display: flex; align-items: center; gap: 12px; }
+  .acc-ico { width: 42px; height: 42px; border-radius: 13px; display: flex; align-items: center; justify-content: center; flex: none; color: #fff; }
+  .acc-ico svg { width: 24px; height: 24px; }
+  .acc-n { flex: 1; min-width: 0; }
+  .acc-n b { display: block; font-size: 17px; font-weight: 500; }
+  .acc-n small { display: block; font-size: 13px; color: var(--muted); }
+  .acc-t { text-align: right; font-size: 16px; font-weight: 500; white-space: nowrap; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .cc { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: var(--soft); color: var(--ink); white-space: nowrap; }
+  .pill { min-height: 44px; padding: 0 16px; border: 1px solid var(--line); border-radius: 22px; background: var(--card); font-size: 15px; font-weight: 500; white-space: nowrap; }
+  .pill[aria-pressed="true"] { background: var(--ink); color: var(--card); border-color: var(--ink); }
+  .scroll-x { display: flex; gap: 8px; overflow-x: auto; margin: 0 -20px; padding: 0 20px 2px; scrollbar-width: none; }
+  .scroll-x::-webkit-scrollbar { display: none; }
+  .ghost { min-height: 52px; border-radius: 16px; border: 1px dashed var(--muted); background: transparent; font-size: 16px; font-weight: 500; }
+  .primary { min-height: 54px; border-radius: 16px; border: 0; background: var(--accent); color: var(--on-accent); font-size: 17px; font-weight: 500; }
+  .primary[disabled] { opacity: .4; cursor: not-allowed; }
+  .second { min-height: 50px; border-radius: 16px; border: 1px solid var(--line); background: var(--card); font-size: 16px; font-weight: 500; }
+  .danger { color: var(--bad); }
+  .push { margin-top: auto; }
+
+  .qa { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+  .qa button { border: 0; background: var(--card); border-radius: 14px; min-height: 66px; padding: 8px 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; font-size: 12px; font-weight: 500; }
+  .qa svg { width: 22px; height: 22px; color: var(--accent); }
+  .bal { display: flex; gap: 8px; overflow-x: auto; margin: 0 -20px; padding: 0 20px 2px; scrollbar-width: none; }
+  .bal::-webkit-scrollbar { display: none; }
+  .bal button { flex: none; min-width: 118px; text-align: left; border: 1px solid var(--line); background: var(--card); border-radius: 14px; padding: 10px 14px; }
+  .bal button[aria-pressed="true"] { border-color: var(--accent); background: var(--sel); }
+  .bal small { display: block; font-size: 12px; color: var(--muted); }
+  .bal b { display: block; font-size: 17px; font-weight: 500; white-space: nowrap; }
+  .list { background: var(--card); border-radius: 18px; padding: 2px 16px; }
+  .row { width: 100%; min-height: 58px; border: 0; border-top: 1px solid var(--line); background: transparent; display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 16px; text-align: left; }
+  .row:first-child { border-top: 0; }
+  .row .l { display: flex; align-items: center; gap: 12px; font-weight: 500; min-width: 0; }
+  .row .l small { display: block; font-size: 13px; color: var(--muted); font-weight: 400; }
+  .row .r { text-align: right; font-weight: 500; white-space: nowrap; }
+  .row .r small { display: block; font-size: 13px; color: var(--muted); font-weight: 400; }
+  .tx-i { width: 36px; height: 36px; border-radius: 18px; background: var(--soft); display: flex; align-items: center; justify-content: center; flex: none; font-size: 16px; }
+  .pos { color: var(--good); } .neg { color: var(--ink); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 8px; font-size: 12px; font-weight: 500; background: var(--soft); color: var(--muted); }
+  .badge.ok { background: var(--sel); color: var(--accent); }
+
+  .goal { display: block; width: 100%; text-align: left; border: 0; background: var(--card); border-radius: 18px; padding: 14px 16px; }
+  .goal.off { opacity: .72; }
+  .g-top { display: flex; align-items: center; gap: 12px; }
+  .g-ico { width: 42px; height: 42px; border-radius: 13px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .g-ico svg { width: 26px; height: 26px; }
+  .g-name { flex: 1; min-width: 0; }
+  .g-name b { display: block; font-size: 17px; font-weight: 500; line-height: 1.2; }
+  .g-name small { display: block; font-size: 13px; color: var(--muted); margin-top: 1px; }
+  .g-pct { font-size: 22px; font-weight: 500; }
+  .trk { position: relative; height: 10px; margin-top: 12px; display: block; }
+  .trk div { position: absolute; left: 0; top: 0; height: 10px; -webkit-mask-image: repeating-linear-gradient(90deg, #000 0, #000 9px, transparent 9px, transparent 12px); mask-image: repeating-linear-gradient(90deg, #000 0, #000 9px, transparent 9px, transparent 12px); }
+  .trk .bg { right: 0; background: var(--track); }
+  .g-bot { display: flex; justify-content: space-between; align-items: center; margin-top: 9px; font-size: 13px; color: var(--muted); gap: 8px; }
+  .g-bot .when { display: flex; align-items: center; gap: 6px; color: var(--ink); font-weight: 500; }
+  .g-bot svg { width: 15px; height: 15px; }
+
+  .fld { display: flex; flex-direction: column; gap: 6px; }
+  .fld > label, .lab { font-size: 13px; color: var(--muted); }
+  .inp { width: 100%; height: 50px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); padding: 0 14px; font-size: 17px; }
+  select.inp { appearance: none; -webkit-appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 20px) 22px, calc(100% - 15px) 22px; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 36px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pv { background: var(--card); border-radius: 18px; padding: 6px 16px; }
+  .pv .r2 { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 15px; }
+  .pv .r2:first-child { border-top: 0; }
+  .pv .r2 > span:first-child { color: var(--muted); }
+  .pv .r2 b { font-weight: 500; text-align: right; }
+  .arrow { color: var(--muted); margin: 0 4px; }
+  .warn { background: var(--warn-bg); color: var(--warn); border-radius: 14px; padding: 12px 14px; font-size: 14px; line-height: 1.4; }
+  .warn button { margin-top: 8px; min-height: 40px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--warn); background: transparent; color: var(--warn); font-size: 14px; font-weight: 500; }
+  .info { background: var(--soft); border-radius: 14px; padding: 12px 14px; font-size: 14px; line-height: 1.4; }
+  .toast { background: var(--accent); color: var(--on-accent); border-radius: 14px; padding: 12px 14px; font-size: 15px; font-weight: 500; }
+  .opt { width: 100%; min-height: 58px; text-align: left; border: 1px solid var(--line); border-radius: 14px; background: var(--card); padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 16px; font-weight: 500; }
+  .opt small { display: block; font-size: 13px; color: var(--muted); font-weight: 400; }
+  .opt[aria-pressed="true"] { border-color: var(--accent); background: var(--sel); }
+  .opt .rad { width: 20px; height: 20px; border-radius: 10px; border: 2px solid var(--muted); flex: none; }
+  .opt[aria-pressed="true"] .rad { border-color: var(--accent); background: radial-gradient(circle, var(--accent) 0 5px, transparent 6px); }
+  .steps { display: flex; gap: 6px; }
+  .steps i { flex: 1; height: 4px; border-radius: 2px; background: var(--track); }
+  .steps i.on { background: var(--accent); }
+  .sw { display: flex; gap: 8px; flex-wrap: wrap; }
+  .sw button { width: 44px; height: 44px; border-radius: 14px; border: 2px solid transparent; }
+  .sw button[aria-pressed="true"] { border-color: var(--ink); }
+  .looks { display: flex; flex-direction: column; gap: 10px; }
+  .look { min-height: 56px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); padding: 0 16px; display: flex; align-items: center; justify-content: space-between; font-size: 16px; }
+  .look[aria-pressed="true"] { border-color: var(--accent); }
+  .sws { display: flex; gap: 4px; } .sws i { width: 16px; height: 16px; border-radius: 5px; display: block; }
+  .chart { background: var(--card); border-radius: 18px; padding: 12px 12px 8px; }
+  .chart svg { width: 100%; height: auto; display: block; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 6px 4px 2px; }
+  .legend i { display: inline-block; width: 14px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 5px; }
+  .seg { display: flex; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--card); }
+  .seg button { flex: 1; height: 44px; border: 0; background: transparent; color: var(--muted); font-size: 15px; font-weight: 500; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--card); }
+
+  .cat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .cat-card { border: 0; background: var(--card); border-radius: 20px; padding: 10px 10px 14px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .cat-card svg { width: 100%; max-width: 150px; height: auto; }
+  .cat-card b { font-size: 16px; font-weight: 500; }
+  .cat-card small { font-size: 12px; color: var(--muted); }
+  .rar { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 500; }
+  .r-c { background: #E8EEE9; color: #3B5A47; } .r-r { background: #E1ECFB; color: #1F4DB8; } .r-e { background: #EEE3FA; color: #6A3FB0; } .r-l { background: #FBEBCF; color: #8A5300; } .r-m { background: #FADDE8; color: #A12A5B; }
+  [data-look="b"] .r-c { background: #22332A; color: #9FD5B0; } [data-look="b"] .r-r { background: #1E2C42; color: #8FB4FF; } [data-look="b"] .r-e { background: #2E2542; color: #C3A6F0; } [data-look="b"] .r-l { background: #3A2F1B; color: #F2B35A; } [data-look="b"] .r-m { background: #3B2230; color: #F08AB0; }
+  .stage { position: relative; background: var(--card); border-radius: 24px; padding: 18px 12px 12px; display: flex; flex-direction: column; align-items: center; }
+  .stage svg { width: 78%; max-width: 280px; height: auto; }
+
+  .ov { position: absolute; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; color: #F5F0FF; background: radial-gradient(circle at 50% 38%, #4B3A8F 0%, #241A4D 45%, #0E0A24 100%); animation: ovin .5s ease both; }
+  .ov .rings { position: absolute; left: 50%; top: 38%; width: 0; height: 0; }
+  .ov .rings i { position: absolute; left: -110px; top: -110px; width: 220px; height: 220px; border-radius: 50%; border: 2px solid rgba(255,220,150,.55); animation: ring 2.4s ease-out infinite; }
+  .ov .rings i:nth-child(2) { animation-delay: .8s; } .ov .rings i:nth-child(3) { animation-delay: 1.6s; }
+  .ov .catwrap { width: 220px; animation: pop 1.1s cubic-bezier(.2,.9,.3,1.3) .5s both; position: relative; z-index: 2; }
+  .ov .catwrap svg { width: 100%; height: auto; filter: drop-shadow(0 0 24px rgba(255,214,120,.55)); }
+  .ov .sp { position: absolute; left: 50%; top: 38%; width: 8px; height: 8px; border-radius: 50%; background: #FFD98A; opacity: 0; animation: spark 1.8s ease-out 1.1s both; }
+  .ov .msg { position: relative; z-index: 2; margin-top: 18px; animation: fadeup .8s ease 1.4s both; }
+  .ov .msg small { display: block; font-size: 15px; color: #FFD98A; letter-spacing: .02em; }
+  .ov .msg h2 { font-size: 26px; margin: 6px 0 4px; font-weight: 600; }
+  .ov .msg p { margin: 8px auto 0; max-width: 300px; font-size: 15px; line-height: 1.45; color: #D9D0F2; }
+  .ov .btns { position: relative; z-index: 2; margin-top: 22px; display: flex; gap: 10px; animation: fadeup .8s ease 1.8s both; }
+  .ov .btns button { min-height: 48px; padding: 0 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,.35); background: transparent; color: #fff; font-size: 16px; }
+  .ov .btns .main { background: #FFD98A; color: #2A1B5B; border-color: #FFD98A; font-weight: 500; }
+  body.calm .ov, body.calm .ov * { animation: none !important; opacity: 1 !important; transform: none !important; }
+  body.calm .ov .sp, body.calm .ov .rings { display: none; }
+  @keyframes ovin { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes ring { 0% { transform: scale(.4); opacity: .9; } 100% { transform: scale(2.1); opacity: 0; } }
+  @keyframes pop { 0% { transform: scale(.1) rotate(-12deg); opacity: 0; } 60% { transform: scale(1.12) rotate(4deg); opacity: 1; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+  @keyframes spark { 0% { transform: translate(0,0) scale(.4); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) scale(1.3); opacity: 0; } }
+  @keyframes fadeup { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .ov, .ov * { animation: none !important; opacity: 1 !important; transform: none !important; } .ov .sp, .ov .rings { display: none; } }
+  @media (min-width: 520px) { body { background: #D9DCE0; } .app { height: min(100dvh, 874px); border-left: 1px solid #C6CAD0; border-right: 1px solid #C6CAD0; } }
+
+  .curctl { position: relative; display: inline-block; }
+  .hdr { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
+  .row.void { color: var(--muted); }
+  .row.void .r { text-decoration: line-through; color: var(--muted); }
+  .row.void .tx-i { opacity: .55; }
+  .pendline { border: 0; background: transparent; padding: 0; margin-top: 6px; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; color: var(--accent); text-align: left; line-height: 1.2; }
+  .pendline i { width: 8px; height: 8px; border-radius: 4px; background: var(--accent); display: inline-block; }
+  .big-inp { width: 100%; height: 64px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); padding: 0 16px; font-size: 32px; font-weight: 600; letter-spacing: -0.02em; }
+  #view > * { flex-shrink: 0; }
+  .shelf { min-height: 72px; width: 100%; text-align: left; border: 0; border-radius: 18px; padding: 12px 14px; background: linear-gradient(120deg, var(--t4), var(--card) 70%); display: flex; align-items: center; gap: 12px; position: relative; overflow: hidden; }
+  .shelf b { display: block; font-size: 16px; font-weight: 500; }
+  .shelf small { display: block; font-size: 13px; color: var(--muted); }
+  .minis { display: flex; flex: none; }
+  .mini { width: 46px; height: 46px; border-radius: 50%; background: var(--card); border: 2px solid var(--t4); overflow: hidden; margin-left: -12px; display: block; }
+  .mini:first-child { margin-left: 0; }
+  .mini svg { width: 100%; height: 100%; display: block; }
+  .spark { position: absolute; right: 44px; top: 8px; color: #E2B84A; opacity: .8; }
+</style>
+</head>
+<body data-look="a">
+<div class="app">
+  <main id="view" aria-live="polite"></main>
+  <nav class="tabs" id="tabs" aria-label="Розділи додатка"></nav>
+  <div id="ov"></div>
+</div>
+<script>
+(function () {
+  var RATES = { UAH: 1, USD: 42, EUR: 48.5, GBP: 56, JPY: 0.27, USDT: 42 };
+  var SYM = { UAH: '₴', USD: '$', EUR: '€', GBP: '£', JPY: '¥', USDT: 'USDT' };
+  var PRIMARY = ['UAH', 'USD', 'EUR'];
+  var NAMES = { UAH: 'Гривня', USD: 'Долар', EUR: 'Євро' };
+  var TYPES = { cash: 'Готівка', bank: 'Банківський рахунок', biz: 'Бізнес / ФОП', dep: 'Депозит', crypto: 'Криптовалюта', other: 'Інше' };
+  var TCOL = { cash: 'var(--p1)', bank: 'var(--p2)', biz: 'var(--g2)', dep: 'var(--g3)', crypto: 'var(--g4)', other: 'var(--p3)' };
+  var DATE0 = '11.11.2026';
+
+  var ACCOUNTS = [
+    { id: 'mono', n: 'Monobank', type: 'bank', color: 'var(--p2)', bal: [{ c: 'UAH', a: 85000 }, { c: 'EUR', a: 300 }, { c: 'USD', a: 500 }] },
+    { id: 'cash', n: 'Готівка', type: 'cash', color: 'var(--p1)', bal: [{ c: 'USD', a: 1700 }, { c: 'EUR', a: 500 }, { c: 'JPY', a: 120000 }, { c: 'UAH', a: 8000 }] },
+    { id: 'wise', n: 'Wise', type: 'bank', color: 'var(--g4)', bal: [{ c: 'EUR', a: 1500 }, { c: 'USD', a: 800 }, { c: 'GBP', a: 200 }] },
+    { id: 'fop', n: 'ФОП · Приват', type: 'biz', color: 'var(--g2)', bal: [{ c: 'UAH', a: 120000 }] },
+    { id: 'dep', n: 'Депозит · Ощад', type: 'dep', color: 'var(--g3)', bal: [{ c: 'UAH', a: 60000 }] },
+    { id: 'bin', n: 'Binance', type: 'crypto', color: 'var(--p3)', bal: [{ c: 'USDT', a: 476.19 }] }
+  ];
+  var TX = [
+    { id: 1, acc: 'wise', type: 'xfer', amt: -500, cur: 'EUR', date: '10.11.2026', note: 'Переказ у Monobank', rel: 'Monobank', fee: 5, rate: 48.5, to: '+24 250 ₴', eff: [['wise', 'EUR', -505], ['mono', 'UAH', 24250]] },
+    { id: 2, acc: 'wise', type: 'in', amt: 300, cur: 'USD', date: '05.11.2026', note: 'Фриланс, проєкт', eff: [['wise', 'USD', 300]] },
+    { id: 3, acc: 'wise', type: 'add', amt: 50, cur: 'EUR', date: '01.11.2026', note: 'Різниця при звірці', eff: [['wise', 'EUR', 50]] },
+    { id: 4, acc: 'wise', type: 'out', amt: -20, cur: 'USD', date: '28.10.2026', note: 'Підписки', eff: [['wise', 'USD', -20]] },
+    { id: 5, acc: 'wise', type: 'sub', amt: -30, cur: 'GBP', date: '20.10.2026', note: 'Комісія банку (корекція)', eff: [['wise', 'GBP', -30]] },
+    { id: 6, acc: 'wise', type: 'init', amt: 1500, cur: 'EUR', date: '15.10.2026', note: 'Початковий баланс' },
+    { id: 7, acc: 'mono', type: 'xfer', amt: 24250, cur: 'UAH', date: '10.11.2026', note: 'Переказ із Wise', rel: 'Wise', rate: 48.5, link: 1 },
+    { id: 8, acc: 'mono', type: 'in', amt: 40000, cur: 'UAH', date: '05.11.2026', note: 'Зарплата', eff: [['mono', 'UAH', 40000]] },
+    { id: 9, acc: 'cash', type: 'sub', amt: -2000, cur: 'JPY', date: '02.11.2026', note: 'Зняття готівки, не було записано', eff: [['cash', 'JPY', -2000]] }
+  ];
+  var GOALS = [
+    { id: 'laptop', amt: 100, freq: 'month', day: 5, auto: true, name: 'Ноутбук', icon: 'laptop', target: 1200, cur: 'USD', saved: 250, monthly: 100, status: 'active', desired: '2027-05-01', hist: [['contrib', 100, '05.11.2026', 'З зарплати'], ['contrib', 100, '05.10.2026', ''], ['contrib', 50, '20.09.2026', 'Початкова сума']] },
+    { id: 'shoes', amt: 100, freq: 'month', day: 5, auto: true, name: 'Взуття', icon: 'shoes', target: 400, cur: 'USD', saved: 250, monthly: 100, status: 'active', desired: '', hist: [['contrib', 150, '05.11.2026', ''], ['contrib', 100, '05.10.2026', '']] },
+    { id: 'trip', amt: 200, freq: 'month', day: 5, auto: true, name: 'Подорож', icon: 'plane', target: 3000, cur: 'USD', saved: 500, monthly: 200, status: 'active', desired: '', hist: [['contrib', 200, '05.11.2026', ''], ['contrib', 300, '05.10.2026', '']] },
+    { id: 'reserve', amt: 150, freq: 'month', day: 5, auto: true, name: 'Резервний фонд', icon: 'shield', target: 3000, cur: 'EUR', saved: 200, monthly: 150, status: 'paused', desired: '', hist: [['contrib', 200, '01.09.2026', '']] }
+  ];
+  var RECUR = [{ id: 'r1', acc: 'mono', amt: 5000, cur: 'UAH', freq: 'month', day: 5, note: 'Зарплата', auto: false, pending: true }];
+  var FREQ = { month: 'щомісяця', week: 'щотижня', day: 'щодня', salary: 'у день зарплати' };
+  var WD = ['понеділок', 'вівторок', 'середа', 'четвер', 'п’ятниця', 'субота', 'неділя'];
+  var FEQ = { month: 1, week: 52 / 12, day: 30.44, salary: 1 };
+  function syncMonthly(g) { g.monthly = Math.round(g.amt * (FEQ[g.freq] || 1) * 100) / 100; }
+  GOALS.forEach(syncMonthly);
+  var GCOL = { laptop: ['var(--g1)', 'var(--t1)'], shoes: ['var(--g2)', 'var(--t2)'], trip: ['var(--g3)', 'var(--t3)'], reserve: ['var(--g4)', 'var(--t4)'], extra: ['var(--g1)', 'var(--t1)'] };
+  var S = { def: 'UAH', route: 'home', p: {}, stack: [], cur: 'UAH', menu: false, look: 'a', cats: [{ id: 'persist', date: '03.11.2026' }], calm: false, sound: false, wd: { amount: 100, method: 'prop', goal: 'laptop', account: 'cash', spent: true }, period: 3, scen: { inc: false, cut: false, laptop: false, trip: false }, calc: null };
+  var INCOME = 1000, EXPENSES = 600;
+  try { var sv = localStorage.getItem('proto-look'); if (sv === 'a' || sv === 'b' || sv === 'c') S.look = sv; } catch (e) {}
+  var q = (location.search.match(/look=([abc])/) || [])[1]; if (q) S.look = q;
+
+  /* ---------- helpers ---------- */
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function num(a, d) { return a.toLocaleString('uk-UA', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+  function fmtC(a, c) { var d = (c === 'JPY' || Math.abs(a - Math.round(a)) < 0.005) ? 0 : 2; var n = num(a, d); return c === 'USDT' ? n + ' USDT' : n + ' ' + SYM[c]; }
+  function fmtS(a, c) { return (a > 0 ? '+' : a < 0 ? '−' : '') + fmtC(Math.abs(a), c); }
+  function conv(uah) { return fmtC(Math.round(uah / RATES[S.cur]), S.cur); }
+  function uahOf(a, c) { return a * RATES[c]; }
+  function accUah(a) { return a.bal.reduce(function (s, b) { return s + b.a * RATES[b.c]; }, 0); }
+  function activeAcc() { return ACCOUNTS.filter(function (a) { return !a.archived; }); }
+  function total() { return activeAcc().reduce(function (s, a) { return s + accUah(a); }, 0); }
+  function accById(id) { return ACCOUNTS.filter(function (a) { return a.id === id; })[0]; }
+  function goalById(id) { return GOALS.filter(function (g) { return g.id === id; })[0]; }
+  function liveGoals() { return GOALS.filter(function (g) { return g.status === 'active' || g.status === 'paused'; }); }
+  function activeGoals() { return GOALS.filter(function (g) { return g.status === 'active'; }); }
+  function pool() { return liveGoals().reduce(function (s, g) { return s + g.saved * RATES[g.cur]; }, 0); }
+  function free() { return total() - pool(); }
+  function balOf(acc, c) { var b = acc.bal.filter(function (x) { return x.c === c; })[0]; return b ? b.a : 0; }
+  function addBal(accId, c, d) {
+    var a = accById(accId), b = a.bal.filter(function (x) { return x.c === c; })[0];
+    if (!b) { b = { c: c, a: 0 }; a.bal.push(b); }
+    b.a = Math.round((b.a + d) * 100) / 100;
+  }
+  function pct(g) { return Math.min(100, Math.round(g.saved / g.target * 100)); }
+  function monthsOf(g) { return g.monthly > 0 ? Math.max(0, Math.ceil((g.target - g.saved) / g.monthly)) : null; }
+  function dateAfter(m) { var d = new Date(); d.setMonth(d.getMonth() + m); return d.toLocaleDateString('uk-UA', { month: 'long', year: 'numeric' }); }
+  function etaOf(g) { if (g.status === 'done') return 'виконано'; if (g.status === 'paused') return 'на паузі'; var m = monthsOf(g); return m === null ? '—' : (m === 0 ? 'можна купити' : dateAfter(m)); }
+  function byType() {
+    var order = ['cash', 'bank', 'biz', 'dep', 'crypto'], names = { cash: 'Готівка', bank: 'Банки', biz: 'ФОП', dep: 'Депозити', crypto: 'Крипта' }, cols = ['--p1', '--p2', '--p3', '--p4', '--p5'];
+    return order.map(function (t, i) { return { n: names[t], u: activeAcc().filter(function (a) { return a.type === t; }).reduce(function (s, a) { return s + accUah(a); }, 0), k: cols[i] }; }).filter(function (x) { return x.u > 0; });
+  }
+  function sz(text, base) { return base + (String(text).length > 11 ? ' sm' : ''); }
+  function crossRate(from, to) { return RATES[from] / RATES[to]; }
+
+  /* ---------- icons ---------- */
+  var IC = {
+    left: '<path d="M15 6l-6 6 6 6"/>', right: '<path d="M9 6l6 6-6 6"/>', chev: '<path d="M6 9l6 6 6-6"/>', plus: '<path d="M12 5v14M5 12h14"/>',
+    up: '<path d="M7 17L17 7"/><path d="M8 7h9v9"/>', cal: '<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+    in: '<path d="M12 4v12"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/>', out: '<path d="M12 20V8"/><path d="M7 13l5-5 5 5"/><path d="M5 4h14"/>',
+    swap: '<path d="M4 8h14l-3-3"/><path d="M20 16H6l3 3"/>', addm: '<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>', subm: '<circle cx="12" cy="12" r="9"/><path d="M8 12h8"/>',
+    cash: '<rect x="3" y="7" width="18" height="10" rx="2"/><circle cx="12" cy="12" r="2.5"/>', bank: '<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18"/>', biz: '<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M9 8V5h6v3"/>', dep: '<rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>', crypto: '<circle cx="12" cy="12" r="9"/><path d="M9 8h4a2 2 0 0 1 0 4H9m0 0h5a2 2 0 0 1 0 4H9M9 7v10"/>', other: '<rect x="3" y="6" width="18" height="13" rx="3"/><circle cx="16.5" cy="12.5" r="1"/>',
+    laptop: '<rect x="5" y="5" width="14" height="10" rx="1.6"/><path d="M3 19h18"/>', shoes: '<path d="M3 16c0-2.2 1.2-3.6 3.2-3.6H8l3 2.2h4.5c2.4 0 5.5 1 5.5 3.4V18H3z"/><path d="M3 18h18"/>', plane: '<path d="M21 3L3 10.5l6.5 2.5L12 20z"/><path d="M9.5 13L21 3"/>', car: '<path d="M5 13l1.6-4.4A2 2 0 0 1 8.5 7.3h7a2 2 0 0 1 1.9 1.3L19 13"/><rect x="3" y="13" width="18" height="5" rx="2"/><circle cx="7.5" cy="18" r="1.6"/><circle cx="16.5" cy="18" r="1.6"/>', home: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>', shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
+    tabHome: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>', tabAcc: '<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18"/><circle cx="16.5" cy="14.5" r="1"/>', tabGoal: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>', tabFc: '<path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 15l4-4 3 3 5-6"/>', tabMore: '<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>',
+    cat: '<path d="M5 9V4l4 3h6l4-3v5a7 7 0 0 1-14 0z"/><circle cx="9.5" cy="11" r=".8"/><circle cx="14.5" cy="11" r=".8"/>', dots: '<circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/>'
+  };
+  function ic(n, s, st) { return '<svg width="' + (s || 22) + '" height="' + (s || 22) + '" viewBox="0 0 24 24" fill="none" stroke="' + (st || 'currentColor') + '" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + IC[n] + '</svg>'; }
+
+  /* ---------- cats (vector) ---------- */
+  var CATS = {
+    first: { n: 'Кошеня-Зірочка', r: 'c', story: 'Крихітне кошеня, яке тримає зірку, що світиться. Воно з’являється, коли ви вперше доводите ціль до кінця.' },
+    persist: { n: 'Кіт-Монетка', r: 'c', story: 'Уперто тягне важку чарівну монету. Любить, коли вносять частинами й не пропускають місяців.' },
+    trav: { n: 'Кіт-Мандрівник', r: 'r', story: 'Маленькі крильця, валіза й карта, яка сама показує дорогу. Прилітає після довгоочікуваної подорожі.' },
+    home: { n: 'Кіт-Домовик', r: 'l', story: 'Носить капелюх-будиночок і золотий ключик. Оселяється там, де здійснилась мрія про власний дім.' },
+    crystal: { n: 'Королівський Кіт-Кристал', r: 'e', story: 'Поважний, але милий. Сидить на купі кристалів, які світяться, коли заощадження ростуть довго й спокійно.' },
+    moon: { n: 'Місячний Хранитель', r: 'm', story: 'Загортається в плащ із зірок і стереже довгі звички. Показується дуже рідко.' }
+  };
+  var RAR = { c: 'Звичайний', r: 'Рідкісний', e: 'Епічний', l: 'Легендарний', m: 'Міфічний' };
+  var uidn = 0;
+  function catSvg(id, vb) {
+    var u = 'c' + (++uidn);
+    var PAL = { first: ['#F7D2AE', '#FFF1DF'], persist: ['#A4E2C2', '#E6FBF1'], trav: ['#9FD3F2', '#E6F5FF'], home: ['#C9B7F2', '#EFE8FF'], crystal: ['#5A55B8', '#A09CF0'], moon: ['#6A47A6', '#AC8AE0'] };
+    var pal = PAL[id] || PAL.first, body = pal[0], hi = pal[1], dark = (id === 'crystal' || id === 'moon'), ink = dark ? '#FFFFFF' : '#2B2440';
+    var defs = '<defs><radialGradient id="' + u + 'h" cx="38%" cy="28%" r="80%"><stop offset="0" stop-color="' + hi + '"/><stop offset="1" stop-color="' + body + '"/></radialGradient><radialGradient id="' + u + 'g" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#FFE9A8" stop-opacity=".95"/><stop offset="1" stop-color="#FFD35A" stop-opacity="0"/></radialGradient></defs>';
+    var behind = '', front = '', brows = '', eyes;
+    if (id === 'trav') behind = '<path d="M44 104 Q4 78 14 36 Q42 44 52 84 Z" fill="#FFFFFF" stroke="#8FBFE0" stroke-width="2.5"/><path d="M116 104 Q156 78 146 36 Q118 44 108 84 Z" fill="#FFFFFF" stroke="#8FBFE0" stroke-width="2.5"/><path d="M30 60 Q36 70 44 76 M130 60 Q124 70 116 76" stroke="#CFE6F6" stroke-width="2" fill="none"/>';
+    if (id === 'moon') behind = '<polygon points="48,104 112,104 134,158 26,158" fill="#C43D6B"/><polygon points="48,104 112,104 120,118 40,118" fill="#E05A8A"/>';
+    eyes = '<ellipse cx="62" cy="82" rx="7" ry="9" fill="' + ink + '"/><ellipse cx="98" cy="82" rx="7" ry="9" fill="' + ink + '"/><circle cx="64.5" cy="78" r="2.6" fill="#fff"/><circle cx="100.5" cy="78" r="2.6" fill="#fff"/>';
+    if (id === 'crystal') eyes = '<ellipse cx="62" cy="82" rx="8.5" ry="10" fill="#fff"/><ellipse cx="98" cy="82" rx="8.5" ry="10" fill="#fff"/><ellipse cx="63" cy="83" rx="5" ry="6.5" fill="#2B2440"/><ellipse cx="99" cy="83" rx="5" ry="6.5" fill="#2B2440"/><circle cx="64.5" cy="80.5" r="1.8" fill="#fff"/><circle cx="100.5" cy="80.5" r="1.8" fill="#fff"/>';
+    if (id === 'moon') eyes = '<path d="M54 82 Q62 74 70 82" stroke="' + ink + '" stroke-width="3.2" fill="none" stroke-linecap="round"/><path d="M90 82 Q98 74 106 82" stroke="' + ink + '" stroke-width="3.2" fill="none" stroke-linecap="round"/>';
+    if (id === 'persist') brows = '<path d="M53 69 L70 74" stroke="' + ink + '" stroke-width="3" stroke-linecap="round"/><path d="M107 69 L90 74" stroke="' + ink + '" stroke-width="3" stroke-linecap="round"/>';
+    if (id === 'first') front = '<circle cx="80" cy="20" r="32" fill="url(#' + u + 'g)"/><polygon points="80,2 85.5,13.5 98,15 89,23.5 91.5,36 80,30 68.5,36 71,23.5 62,15 74.5,13.5" fill="#FFD35A" stroke="#F2A93B" stroke-width="2" stroke-linejoin="round"/>';
+    if (id === 'home') front = '<polygon points="50,46 80,16 110,46" fill="#E9806E" stroke="#C9604E" stroke-width="2" stroke-linejoin="round"/><rect x="62" y="44" width="36" height="9" rx="2" fill="#FBEEDB"/><rect x="76" y="46" width="8" height="7" rx="1" fill="#C9604E"/><circle cx="122" cy="134" r="7" fill="none" stroke="#E7B13C" stroke-width="3.2"/><path d="M122 141 V158 M122 150 H129 M122 156 H128" stroke="#E7B13C" stroke-width="3.2" stroke-linecap="round" fill="none"/>';
+    if (id === 'trav') front = '<rect x="22" y="132" width="30" height="22" rx="4" fill="#F2A65A" stroke="#C97F34" stroke-width="2"/><path d="M30 132 v-5 a3 3 0 0 1 3-3 h8 a3 3 0 0 1 3 3 v5" fill="none" stroke="#C97F34" stroke-width="2"/><path d="M30 132 v22 M44 132 v22" stroke="#C97F34" stroke-width="2"/>';
+    if (id === 'persist') front = '<circle cx="80" cy="140" r="19" fill="#FFD35A" stroke="#E5A52F" stroke-width="3"/><circle cx="80" cy="140" r="13" fill="none" stroke="#E5A52F" stroke-width="2"/><text x="80" y="147" text-anchor="middle" font-size="18" font-weight="600" fill="#B7791F" font-family="Onest,sans-serif">₴</text>';
+    if (id === 'crystal') front = '<polygon points="52,48 60,26 71,40 80,20 89,40 100,26 108,48" fill="#FFD35A" stroke="#E0A53A" stroke-width="2" stroke-linejoin="round"/><circle cx="80" cy="34" r="3" fill="#F59AD6"/><polygon points="20,132 29,116 38,132 29,150" fill="#7FE5F2" stroke="#4CC3D4" stroke-width="2"/><polygon points="122,138 131,120 140,138 131,154" fill="#F59AD6" stroke="#D96BB5" stroke-width="2"/><polygon points="44,148 50,138 56,148 50,158" fill="#B9A6FF" stroke="#8C74E8" stroke-width="2"/>';
+    if (id === 'moon') front = '<path d="M132 14 A18 18 0 1 0 132 52 A13 13 0 1 1 132 14 Z" fill="#FFE9A8"/><polygon points="26,30 29,37 36,37 31,42 33,49 26,45 19,49 21,42 16,37 23,37" fill="#FFE9A8"/><polygon points="22,70 24,75 29,75 25,78 27,83 22,80 17,83 19,78 15,75 20,75" fill="#FFE9A8"/>';
+    var tail = '<path d="M118 140 Q146 132 142 106" stroke="' + body + '" stroke-width="12" fill="none" stroke-linecap="round"/>';
+    return '<svg viewBox="' + (vb || '0 0 160 164') + '" overflow="visible" role="img" aria-label="' + esc((CATS[id] || {}).n || 'Кіт') + '">' + defs +
+      '<ellipse cx="80" cy="159" rx="42" ry="5" fill="#000" opacity=".12"/>' + behind + tail +
+      '<ellipse cx="80" cy="134" rx="37" ry="25" fill="url(#' + u + 'h)"/><ellipse cx="62" cy="154" rx="12" ry="7" fill="' + body + '"/><ellipse cx="98" cy="154" rx="12" ry="7" fill="' + body + '"/>' +
+      '<polygon points="40,62 42,22 76,46" fill="' + body + '" stroke="' + body + '" stroke-width="6" stroke-linejoin="round"/><polygon points="120,62 118,22 84,46" fill="' + body + '" stroke="' + body + '" stroke-width="6" stroke-linejoin="round"/>' +
+      '<polygon points="48,52 49,32 66,45" fill="#F7A8BC"/><polygon points="112,52 111,32 94,45" fill="#F7A8BC"/>' +
+      '<circle cx="80" cy="80" r="47" fill="url(#' + u + 'h)"/>' + eyes + brows +
+      '<circle cx="48" cy="96" r="7.5" fill="#FF9FB4" opacity=".55"/><circle cx="112" cy="96" r="7.5" fill="#FF9FB4" opacity=".55"/>' +
+      '<path d="M76 92 h8 l-4 5 z" fill="#F28BA0"/><path d="M72 100 q4 5 8 0 q4 5 8 0" stroke="' + ink + '" stroke-width="2.2" fill="none" stroke-linecap="round"/>' + front + '</svg>';
+  }
+  function showUnlock(id) {
+    var c = CATS[id], sp = '';
+    for (var i = 0; i < 18; i++) { var ang = i / 18 * Math.PI * 2, r = 120 + (i % 3) * 36; sp += '<i class="sp" style="--dx:' + Math.round(Math.cos(ang) * r) + 'px;--dy:' + Math.round(Math.sin(ang) * r) + 'px;animation-delay:' + (1.1 + (i % 6) * 0.08) + 's"></i>'; }
+    $('ov').innerHTML = '<div class="ov" role="dialog" aria-modal="true" aria-label="Новий кіт у колекції"><div class="rings"><i></i><i></i><i></i></div>' + sp +
+      '<div class="catwrap">' + catSvg(id) + '</div><div class="msg"><small>Новий друг прийшов!</small><h2>' + c.n + '</h2><span class="rar r-' + c.r + '">' + RAR[c.r] + '</span><p>' + c.story + '</p></div>' +
+      '<div class="btns"><button type="button" data-act="ov-close">Закрити</button><button type="button" class="main" data-act="ov-collection">До колекції</button></div></div>';
+  }
+  function unlock(id) { if (S.cats.some(function (x) { return x.id === id; })) return false; S.cats.push({ id: id, date: DATE0 }); showUnlock(id); return true; }
+
+  /* ---------- transactions ---------- */
+  var TXL = { in: 'Дохід', out: 'Витрата', xfer: 'Переказ', add: 'Додано гроші', sub: 'Знято гроші', init: 'Початковий баланс' };
+  var TXI = { in: 'in', out: 'out', xfer: 'swap', add: 'addm', sub: 'subm', init: 'plus' };
+  var txid = 100;
+  function applyEff(eff, sign) { (eff || []).forEach(function (e) { addBal(e[0], e[1], e[2] * sign); }); }
+  function addTx(t) { t.id = ++txid; TX.unshift(t); applyEff(t.eff, 1); return t; }
+  function txRow(t) {
+    var pos = t.amt > 0;
+    return '<button type="button" class="row' + (t.void ? ' void' : '') + '" data-act="open-tx" data-id="' + t.id + '"><span class="l"><span class="tx-i">' + ic(TXI[t.type], 18) + '</span><span style="min-width:0"><span style="display:block">' + esc(t.note || TXL[t.type]) + '</span><small>' + t.date + (t.void ? ' · скасовано' : ((t.note || '') !== TXL[t.type] ? ' · ' + TXL[t.type] : '')) + (t.rel && t.type === 'xfer' ? ' · ' + esc(t.rel) : '') + '</small></span></span><span class="r ' + (pos ? 'pos' : 'neg') + '">' + fmtS(t.amt, t.cur) + (t.fee ? '<small>комісія ' + fmtC(t.fee, t.cur) + '</small>' : '') + '</span></button>';
+  }
+
+  /* ---------- screens: home ---------- */
+  function R_home() {
+    var T = total(), P = pool(), F = T - P;
+    var opts = PRIMARY.map(function (k) { return '<button type="button" role="menuitemradio" aria-checked="' + (S.cur === k) + '" data-act="pick-cur" data-id="' + k + '"><span>' + NAMES[k] + '</span><span style="color:var(--muted)">' + SYM[k] + '</span></button>'; }).join('');
+    var pl = byType(), bar = pl.map(function (p) { return '<span style="width:' + (p.u / T * 100) + '%;background:var(' + p.k + ')"></span>'; }).join('');
+    var cells = pl.map(function (p) { return '<div><div class="pl-n"><i style="background:var(' + p.k + ')"></i>' + p.n + '</div><div class="' + sz(conv(p.u), 'pl-a') + '">' + conv(p.u) + '</div></div>'; }).join('');
+    var tl = conv(T).length;
+    return '<div><div class="hero-row"><span class="lbl">Загальний капітал</span><button type="button" class="cur-btn" data-act="toggle-menu" aria-haspopup="true" aria-expanded="' + S.menu + '" aria-label="Валюта показу: ' + NAMES[S.cur] + '">' + SYM[S.cur] + ic('chev', 16) + '</button>' + (S.menu ? '<div class="menu" role="menu">' + opts + '</div>' : '') + '</div>' +
+      '<div class="total' + (tl > 13 ? ' xs' : tl > 10 ? ' sm' : '') + '">' + conv(T) + '</div><div class="delta">' + ic('up', 15) + '+' + conv(12400) + ' за місяць</div></div>' +
+      '<div class="card"><div class="bar"><span style="width:' + (F / T * 100) + '%;background:var(--accent)"></span><span style="width:' + (P / T * 100) + '%;background:var(--g3)"></span></div><div class="two"><div><div class="pl-n"><i style="background:var(--accent)"></i>Вільні гроші</div><div class="' + sz(conv(F), 'big-a') + '">' + conv(F) + '</div></div><div><div class="pl-n"><i style="background:var(--g3)"></i>Відкладено на цілі</div><div class="' + sz(conv(P), 'big-a') + '">' + conv(P) + '</div></div></div></div>' +
+      '<div class="card"><div class="bar">' + bar + '</div><div class="two" style="gap:10px 12px">' + cells + '</div></div>' +
+      '<div class="sec"><h2>Мої цілі</h2><span>' + activeGoals().length + ' активні</span></div>' + activeGoals().slice(0, 2).map(function (g) { return goalCard(g, true); }).join('') + (activeGoals().length > 2 ? '<button type="button" class="second" style="min-height:46px" data-act="tab" data-id="goals">Усі цілі (' + activeGoals().length + ')</button>' : '');
+  }
+  function goalCard(g, small) {
+    var c = GCOL[g.id] || GCOL.extra, p = pct(g), off = g.status !== 'active';
+    return '<button type="button" class="goal' + (off ? ' off' : '') + '" data-act="open-goal" data-id="' + g.id + '"><span class="g-top"><span class="g-ico" style="background:' + c[1] + ';color:' + c[0] + '">' + ic(g.icon, 26) + '</span><span class="g-name"><b>' + esc(g.name) + (g.status === 'paused' ? ' <span class="badge">на паузі</span>' : '') + '</b><small>' + fmtC(g.saved, g.cur) + ' з ' + fmtC(g.target, g.cur) + '</small></span><span class="g-pct" style="color:' + c[0] + '">' + p + '%</span></span>' +
+      '<span class="trk"><div class="bg"></div><div style="width:' + p + '%;background:' + c[0] + '"></div></span>' +
+      '<span class="g-bot"><span>' + (small ? fmtC(g.monthly, g.cur) + ' на місяць' : 'ще ' + fmtC(Math.max(0, g.target - g.saved), g.cur) + ' · ' + fmtC(g.monthly, g.cur) + '/міс') + '</span><span class="when"><span style="color:' + c[0] + ';display:flex">' + ic('cal', 15) + '</span>' + etaOf(g) + '</span></span></button>';
+  }
+
+  /* ---------- screens: accounts ---------- */
+  function accCard(a) {
+    return '<button type="button" class="acc" data-act="open-acc" data-id="' + a.id + '"><span class="acc-top"><span class="acc-ico" style="background:' + a.color + '">' + ic(a.type, 24) + '</span><span class="acc-n"><b>' + esc(a.n) + '</b><small>' + TYPES[a.type] + '</small></span><span class="acc-t">' + conv(accUah(a)) + '</span></span><span class="chips">' + a.bal.map(function (b) { return '<span class="cc">' + fmtC(b.a, b.c) + '</span>'; }).join('') + '</span></button>';
+  }
+  function R_accounts() {
+    var act = activeAcc(), cs = {}; act.forEach(function (a) { a.bal.forEach(function (b) { cs[b.c] = 1; }); });
+    var arch = ACCOUNTS.filter(function (a) { return a.archived; });
+    return '<h1>Рахунки</h1><div class="card"><div class="pl-n">Усього на рахунках</div><div class="total sm" style="font-size:34px;margin-top:2px">' + conv(total()) + '</div><div class="sub">' + act.length + ' рахунків · ' + Object.keys(cs).length + ' валют</div></div>' +
+      act.map(accCard).join('') + '<button type="button" class="ghost" data-act="go" data-id="acc-new">Додати рахунок</button>' +
+      (arch.length ? '<p class="note">В архіві: ' + arch.map(function (a) { return esc(a.n); }).join(', ') + '. Історія збережена.</p>' : '') +
+      '<p class="note">Один рахунок може мати кілька валют. Загальна сума рахується за вказаними курсами.</p>';
+  }
+  function R_account() {
+    var a = accById(S.p.acc), f = S.p.f || 'all', cf = S.p.c || null;
+    var list = TX.filter(function (t) { return t.acc === a.id && (f === 'all' || t.type === f) && (!cf || t.cur === cf); });
+    var F = [['all', 'Усі'], ['in', 'Дохід'], ['out', 'Витрати'], ['xfer', 'Перекази'], ['add', 'Додано'], ['sub', 'Знято']];
+    return '<div class="head"><button type="button" class="back" data-act="back" aria-label="Назад">' + ic('left') + '</button><h1>' + esc(a.n) + '</h1><button type="button" class="iconbtn" data-act="go" data-id="acc-menu" aria-label="Дії з рахунком">' + ic('dots') + '</button></div>' +
+      '<div><div class="sub" style="margin:0">' + TYPES[a.type] + '</div><div class="total sm" style="font-size:36px">' + conv(accUah(a)) + '</div></div>' +
+      '<div class="bal" role="group" aria-label="Баланси за валютами">' + a.bal.map(function (b) { return '<button type="button" data-act="acc-cur" data-id="' + b.c + '" aria-pressed="' + (cf === b.c) + '"><small>' + b.c + '</small><b>' + fmtC(b.a, b.c) + '</b></button>'; }).join('') + '<button type="button" data-act="go" data-id="add-cur" style="min-width:90px;border-style:dashed"><small>Додати</small><b>+ валюту</b></button></div>' +
+      '<div class="qa"><button type="button" data-act="money" data-id="in" aria-label="Додати дохід">' + ic('in') + 'Дохід</button><button type="button" data-act="money" data-id="out" aria-label="Додати витрату">' + ic('out') + 'Витрата</button><button type="button" data-act="xfer" aria-label="Переказ">' + ic('swap') + 'Переказ</button><button type="button" data-act="money" data-id="add" aria-label="Додати гроші">' + ic('addm') + 'Додати</button><button type="button" data-act="money" data-id="sub" aria-label="Зняти гроші">' + ic('subm') + 'Зняти</button></div>' +
+      '<div class="sec"><h2>Операції</h2><span>' + (cf ? cf + ' · ' : '') + list.length + '</span></div>' +
+      '<div class="scroll-x" role="group" aria-label="Фільтр операцій">' + F.map(function (x) { return '<button type="button" class="pill" data-act="acc-filter" data-id="' + x[0] + '" aria-pressed="' + (f === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</div>' +
+      (list.length ? '<div class="list">' + list.map(txRow).join('') + '</div>' : '<p class="note">Тут поки немає операцій за цим фільтром.</p>') +
+      '<p class="note">Історія лежить усередині кожного рахунку. «Додати» й «Зняти» змінюють капітал, але не вважаються доходом чи витратою.</p>';
+  }
+  function R_acc_menu() {
+    var a = accById(S.p.acc);
+    return '<div class="head"><button type="button" class="back" data-act="back" aria-label="Назад">' + ic('left') + '</button><h1>' + esc(a.n) + '</h1></div><div class="list"><button type="button" class="row"><span class="l">Перейменувати</span>' + ic('right', 18, 'var(--muted)') + '</button><button type="button" class="row"><span class="l">Змінити значок і колір</span>' + ic('right', 18, 'var(--muted)') + '</button><button type="button" class="row" data-act="go" data-id="add-cur"><span class="l">Додати валюту</span>' + ic('right', 18, 'var(--muted)') + '</button><button type="button" class="row" data-act="go" data-id="archive"><span class="l danger">Архівувати рахунок</span>' + ic('right', 18, 'var(--muted)') + '</button></div><p class="note">Рахунок з історією не видаляється назавжди: його можна лише архівувати. Історія збережеться, але нових операцій на ньому не буде.</p>';
+  }
+  function R_add_cur() {
+    var a = accById(S.p.acc), have = a.bal.map(function (b) { return b.c; }), opts = Object.keys(RATES).filter(function (c) { return have.indexOf(c) < 0; });
+    S.sel = S.sel && opts.indexOf(S.sel) >= 0 ? S.sel : opts[0];
+    return '<div class="head"><button type="button" class="back" data-act="back" aria-label="Назад">' + ic('left') + '</button><h1>Додати валюту</h1></div><p class="note">Рахунок «' + esc(a.n) + '» уже має: ' + have.join(', ') + '. Нова валюта буде окремим балансом цього ж рахунку, а не новим рахунком.</p>' +
+      '<div class="chips">' + opts.map(function (c) { return '<button type="button" class="pill" data-act="sel" data-id="' + c + '" aria-pressed="' + (S.sel === c) + '">' + c + '</button>'; }).join('') + '</div>' +
+      '<div class="fld"><label for="f-init">Початковий баланс</label><input class="inp" id="f-init" inputmode="decimal" placeholder="0"></div><p class="note">Початковий баланс це не дохід. Він просто фіксує, скільки вже є.</p><button type="button" class="primary push" data-act="add-cur-ok">Додати</button>';
+  }
+  function R_acc_new() {
+    var n = S.n || (S.n = { type: 'bank', curs: ['UAH'], color: 'var(--p2)' });
+    var cols = ['var(--p1)', 'var(--p2)', 'var(--g2)', 'var(--g3)', 'var(--g4)', 'var(--bad)'];
+    return '<div class="head"><button type="button" class="back" data-act="back-new" aria-label="Назад">' + ic('left') + '</button><h1>Новий рахунок</h1></div>' +
+      '<div class="fld"><label for="f-name">Назва</label><input class="inp" id="f-name" placeholder="Наприклад, Wise або Готівка" value="' + esc(n.name || '') + '"></div>' +
+      '<div class="fld"><span class="lab">Тип</span><div class="chips">' + Object.keys(TYPES).map(function (t) { return '<button type="button" class="pill" data-act="n-type" data-id="' + t + '" aria-pressed="' + (n.type === t) + '">' + TYPES[t] + '</button>'; }).join('') + '</div></div>' +
+      '<div class="fld"><span class="lab">Валюти (можна кілька)</span><div class="chips">' + Object.keys(RATES).map(function (c) { return '<button type="button" class="pill" data-act="n-cur" data-id="' + c + '" aria-pressed="' + (n.curs.indexOf(c) >= 0) + '">' + c + '</button>'; }).join('') + '</div></div>' +
+      '<div class="fld"><span class="lab">Початковий баланс у кожній валюті</span>' + n.curs.map(function (c) { return '<div class="grid2" style="grid-template-columns:70px 1fr;align-items:center"><span style="font-weight:500">' + c + '</span><input class="inp ini" data-c="' + c + '" inputmode="decimal" placeholder="0"></div>'; }).join('') + '</div>' +
+      '<div class="fld"><span class="lab">Колір</span><div class="sw">' + cols.map(function (c) { return '<button type="button" data-act="n-color" data-id="' + c + '" aria-label="Колір" aria-pressed="' + (n.color === c) + '" style="background:' + c + '"></button>'; }).join('') + '</div></div>' +
+      '<p class="note">Початкові баланси не вважаються доходом. Це стартова точка.</p><button type="button" class="primary push" data-act="acc-create">Створити рахунок</button>';
+  }
+  function R_money() {
+    var a = accById(S.p.acc), mode = S.p.mode, T = { in: 'Додати дохід', out: 'Додати витрату', add: 'Додати гроші', sub: 'Зняти гроші' }[mode];
+    S.m = S.m && S.m.acc === a.id && S.m.mode === mode ? S.m : { acc: a.id, mode: mode, cur: a.bal[0].c };
+    var reasons = { add: ['Початкова готівка', 'Невраховане надходження', 'Різниця при звірці'], sub: ['Зняття готівки', 'Корекція комісії', 'Різниця при звірці'], in: ['Зарплата', 'Фриланс'], out: ['Продукти', 'Транспорт', 'Підписки'] }[mode];
+    var hint = mode === 'add' || mode === 'sub' ? 'Це не дохід і не витрата, але змінює загальний капітал. Причина обов’язкова.' : 'Змінює баланс і загальний капітал.';
+    S.calc = function () {
+      var amt = parseFloat((($('f-amt') || {}).value || '').replace(',', '.')) || 0, sign = (mode === 'in' || mode === 'add') ? 1 : -1, cur = S.m.cur, before = balOf(a, cur), after = before + sign * amt;
+      var dT = sign * amt * RATES[cur], bad = after < -0.001;
+      $('pv').innerHTML = '<div class="r2"><span>Баланс ' + cur + '</span><b>' + fmtC(before, cur) + '<span class="arrow">→</span>' + fmtC(after, cur) + '</b></div><div class="r2"><span>Загальний капітал</span><b>' + conv(total()) + '<span class="arrow">→</span>' + conv(total() + dT) + '</b></div>';
+      $('err').innerHTML = bad ? '<div class="warn" role="alert">На балансі ' + cur + ' немає стільки. Від’ємний баланс не дозволений.</div>' : '';
+      $('ok').disabled = !(amt > 0) || bad || !(($('f-why') || {}).value || '').trim();
+    };
+    return '<div class="head"><button type="button" class="back" data-act="back" aria-label="Назад">' + ic('left') + '</button><h1>' + T + '</h1></div><div class="info">' + hint + '</div>' +
+      '<div class="fld"><label for="f-amt">Сума</label><input class="inp" id="f-amt" inputmode="decimal" placeholder="0" data-calc="1"></div>' +
+      '<div class="fld"><span class="lab">Валюта</span><div class="chips">' + a.bal.map(function (b) { return '<button type="button" class="pill" data-act="m-cur" data-id="' + b.c + '" aria-pressed="' + (S.m.cur === b.c) + '">' + b.c + '</button>'; }).join('') + '</div></div>' +
+      '<div class="fld"><label for="f-why">Причина' + (mode === 'add' || mode === 'sub' ? ' (обов’язково)' : '') + '</label><input class="inp" id="f-why" placeholder="Коротко, що це" data-calc="1"><div class="chips" style="margin-top:6px">' + reasons.map(function (r) { return '<button type="button" class="pill" style="min-height:38px;font-size:14px" data-act="why" data-id="' + esc(r) + '">' + r + '</button>'; }).join('') + '</div></div>' +
+      '<div class="fld"><label for="f-date">Дата</label><input class="inp" id="f-date" type="date" value="2026-11-11"></div><div class="pv" id="pv" aria-live="polite"></div><div id="err"></div><button type="button" class="primary push" id="ok" data-act="money-ok" disabled>Зберегти</button>';
+  }
+  function R_xfer() {
+    var X = S.x = S.x || { from: S.p.acc || 'wise', fc: 'EUR', to: 'mono', tc: 'UAH', rate: null };
+    var fa = accById(X.from), ta = accById(X.to);
+    if (!fa.bal.some(function (b) { return b.c === X.fc; })) X.fc = fa.bal[0].c;
+    if (!ta.bal.some(function (b) { return b.c === X.tc; })) X.tc = ta.bal[0].c;
+    function sel(id, val, opts) { return '<select class="inp" id="' + id + '" data-xsel="' + id + '">' + opts.map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === val ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>'; }
+    var accOpts = activeAcc().map(function (a) { return [a.id, esc(a.n)]; });
+    S.calc = function () {
+      var amt = parseFloat((($('x-amt') || {}).value || '').replace(',', '.')) || 0, fee = parseFloat((($('x-fee') || {}).value || '0').replace(',', '.')) || 0;
+      var same = X.fc === X.tc, auto = crossRate(X.fc, X.tc), rate = same ? 1 : (S.x.rateUser != null ? S.x.rateUser : auto);
+      if ($('x-rate') && document.activeElement !== $('x-rate')) $('x-rate').value = String(Math.round(rate * 10000) / 10000).replace('.', ',');
+      if ($('x-rate') && document.activeElement === $('x-rate')) { rate = parseFloat($('x-rate').value.replace(',', '.')) || rate; S.x.rateUser = rate; }
+      var recv = amt * rate, dCap = recv * RATES[X.tc] - amt * RATES[X.fc] - fee * RATES[X.fc], bad = (amt + fee) > balOf(fa, X.fc) + 0.001 || (X.from === X.to && X.fc === X.tc);
+      $('x-recv').textContent = fmtC(recv, X.tc);
+      $('pv').innerHTML = '<div class="r2"><span>' + esc(fa.n) + ' ' + X.fc + '</span><b>' + fmtC(balOf(fa, X.fc), X.fc) + '<span class="arrow">→</span>' + fmtC(balOf(fa, X.fc) - amt - fee, X.fc) + '</b></div><div class="r2"><span>' + esc(ta.n) + ' ' + X.tc + '</span><b>' + fmtC(balOf(ta, X.tc), X.tc) + '<span class="arrow">→</span>' + fmtC(balOf(ta, X.tc) + recv, X.tc) + '</b></div><div class="r2"><span>Курс · дата</span><b>' + (same ? 'однакова валюта' : '1 ' + X.fc + ' = ' + num(rate, 4) + ' ' + X.tc + ' · ' + DATE0) + '</b></div><div class="r2"><span>Загальний капітал</span><b>' + (Math.abs(dCap) < 0.005 ? 'без змін' : fmtS(dCap, 'UAH')) + '</b></div>';
+      $('err').innerHTML = bad ? '<div class="warn" role="alert">' + (X.from === X.to && X.fc === X.tc ? 'Оберіть різні баланси.' : 'На балансі ' + X.fc + ' немає стільки.') + '</div>' : '';
+      $('ok').disabled = !(amt > 0) || bad;
+      S.x.res = { amt: amt, fee: fee, rate: rate, recv: recv };
+    };
+    return '<div class="head"><button type="button" class="back" data-act="back-x" aria-label="Назад">' + ic('left') + '</button><h1>Переказ між рахунками</h1></div>' +
+      '<div class="grid2"><div class="fld"><label for="x-from">Звідки</label>' + sel('x-from', X.from, accOpts) + '</div><div class="fld"><label for="x-fc">Валюта</label>' + sel('x-fc', X.fc, fa.bal.map(function (b) { return [b.c, b.c]; })) + '</div></div>' +
+      '<div class="fld"><label for="x-amt">Сума, яку надсилаєте</label><input class="inp" id="x-amt" inputmode="decimal" placeholder="0" value="500" data-calc="1"></div>' +
+      '<div class="grid2"><div class="fld"><label for="x-to">Куди</label>' + sel('x-to', X.to, accOpts) + '</div><div class="fld"><label for="x-tc">Валюта</label>' + sel('x-tc', X.tc, ta.bal.map(function (b) { return [b.c, b.c]; })) + '</div></div>' +
+      '<div class="grid2"><div class="fld"><label for="x-rate">Курс</label><input class="inp" id="x-rate" inputmode="decimal" data-calc="1"></div><div class="fld"><label for="x-fee">Комісія (у валюті відправлення)</label><input class="inp" id="x-fee" inputmode="decimal" value="5" data-calc="1"></div></div>' +
+      '<div class="card"><div class="pl-n">Отримаєте</div><div class="big-a" id="x-recv"></div></div><div class="pv" id="pv" aria-live="polite"></div><div id="err"></div><p class="note">Переказ це одна операція, пов’язана з обома рахунками. Це не дохід і не витрата. Капітал змінюється лише через комісію та різницю курсу.</p><button type="button" class="primary push" id="ok" data-act="xfer-ok" disabled>Переказати</button>';
+  }
+  function R_tx() {
+    var t = TX.filter(function (x) { return x.id === Number(S.p.id); })[0]; if (!t) return '<p class="note">Операцію не знайдено.</p>';
+    var a = accById(t.acc), rows = [['Тип', TXL[t.type]], ['Сума', fmtS(t.amt, t.cur)], ['Рахунок', esc(a.n)], ['Дата', t.date], ['Опис', esc(t.note || '—')]];
+    if (t.rel) rows.push(['Пов’язаний рахунок', esc(t.rel)]); if (t.rate) rows.push(['Курс', num(t.rate, 4)]); if (t.fee) rows.push(['Комісія', fmtC(t.fee, t.cur)]); if (t.to) rows.push(['Отримано', t.to]);
+    return '<div class="head"><button type="button" class="back" data-act="back" aria-label="Назад">' + ic('left') + '</button><h1>Операція</h1></div><div class="pv">' + rows.map(function (r) { return '<div class="r2"><span>' + r[0] + '</span><b>' + r[1] + '</b></div>'; }).join('') + '</div>' +
+      (t.type === 'xfer' ? '<div class="info">Це одна логічна операція: зміни є на обох рахунках. Вона не рахується доходом чи витратою.</div>' : '') +
+      (t.type === 'init' ? '<div class="info">Початковий баланс не є доходом.</div>' : '') +
+      '<button type="button" class="second">Редагувати</button><button type="button" class="second danger" data-act="del-tx" data-id="' + t.id + '"' + (t.eff ? '' : ' disabled') + '>Видалити</button><p class="note">Після видалення баланси й капітал перерахуються. ' + (t.eff ? '' : 'Цю операцію (переказ чи початковий баланс) видаляйте з обох сторін або через архів.') + '</p>';
+  }
+  function R_archive() {
+    var a = accById(S.p.acc), nz = a.bal.filter(function (b) { return b.a > 0; });
+    return '<div class="head"><button type="button" class="back" data-act="back" aria-label="Назад">' + ic('left') + '</button><h1>Архівувати «' + esc(a.n) + '»?</h1></div>' +
+      (nz.length ? '<div class="warn" role="alert">На рахунку ще є гроші: ' + nz.map(function (b) { return fmtC(b.a, b.c); }).join(', ') + '. Перед архівацією краще переказати залишок на інший рахунок.<br><button type="button" data-act="xfer">Переказати залишок</button></div>' : '') +
+      '<div class="info">Після архівації рахунок зникне зі списку, його історія збережеться, а нових операцій додавати не можна. Повернути його можна з архіву.</div><button type="button" class="second danger" data-act="archive-ok">' + (nz.length ? 'Усе одно архівувати' : 'Архівувати') + '</button><button type="button" class="second" data-act="back">Скасувати</button>';
+  }
+
+  /* ---------- screens: goals ---------- */
+  function hist(g) { return g.hist.map(function (h) { var L = { contrib: 'Внесок', withdraw: 'Зняття', purchase: 'Покупка' }[h[0]]; var neg = h[0] !== 'contrib'; return '<div class="row" style="min-height:52px"><span class="l"><span class="tx-i">' + ic(h[0] === 'contrib' ? 'plus' : h[0] === 'purchase' ? 'out' : 'subm', 18) + '</span><span><span style="display:block">' + L + '</span><small>' + h[2] + (h[3] ? ' · ' + esc(h[3]) : '') + '</small></span></span><span class="r ' + (neg ? 'neg' : 'pos') + '">' + (neg ? '−' : '+') + fmtC(h[1], g.cur) + '</span></div>'; }).join(''); }
+  function R_goals() {
+    var lg = liveGoals(), monthly = activeGoals().reduce(function (s, g) { return s + g.monthly * RATES[g.cur]; }, 0);
+    return '<h1>Цілі</h1><div class="card"><div class="two"><div><div class="pl-n"><i style="background:var(--g3)"></i>Відкладено</div><div class="' + sz(conv(pool()), 'big-a') + '">' + conv(pool()) + '</div></div><div><div class="pl-n"><i style="background:var(--accent)"></i>Вільні гроші</div><div class="' + sz(conv(free()), 'big-a') + '">' + conv(free()) + '</div></div><div><div class="pl-n">Активних цілей</div><div class="big-a">' + activeGoals().length + '</div></div><div><div class="pl-n">Планово на місяць</div><div class="' + sz(conv(monthly), 'big-a') + '">' + conv(monthly) + '</div></div></div><p class="note" style="margin:10px 0 0">Відкладені гроші це частина капіталу, а не окремий рахунок.</p></div>' +
+      lg.map(function (g) { return goalCard(g, false); }).join('') +
+      '<div class="two"><button type="button" class="second" data-act="go" data-id="contribute">Внести в цілі</button><button type="button" class="second" data-act="go" data-id="withdraw">Зняти з цілей</button></div><button type="button" class="ghost" data-act="goal-new">Нова ціль</button>' +
+      (S.cats.length ? '<button type="button" class="row" style="background:var(--card);border-radius:16px;padding:0 16px;min-height:58px;border:0" data-act="go" data-id="cats"><span class="l"><span class="tx-i">' + ic('cat', 20) + '</span>Колекція котиків<small style="display:inline;margin-left:6px">' + S.cats.length + '</small></span>' + ic('right', 18, 'var(--muted)') + '</button>' : '');
+  }
+  function insight(g) {
+    if (g.status === 'done') return 'Ціль виконано. Історія збережена.';
+    if (g.saved >= g.target) return 'У вас уже відкладено достатньо, щоб завершити покупку.';
+    var m = monthsOf(g), msg = [];
+    if (g.desired) {
+      var days = (new Date(g.desired) - new Date(2026, 10, 11)) / 86400000, md = Math.max(1, Math.ceil(days / 30.44)), need = (g.target - g.saved) / md;
+      if (need > g.monthly + 0.01) msg.push('Щоб купити до ' + g.desired.split('-').reverse().join('.') + ', потрібно ' + fmtC(Math.ceil(need), g.cur) + ' на місяць (зараз ' + fmtC(g.monthly, g.cur) + ').');
+      else msg.push('Ви встигаєте до бажаної дати ' + g.desired.split('-').reverse().join('.') + '.');
+    }
+    if (m > 1) { var m2 = Math.ceil((g.target - g.saved) / (g.monthly + 50)); if (m2 < m) msg.push('Якщо відкладати на ' + fmtC(50, g.cur) + ' більше, ціль буде на ' + (m - m2) + ' міс. раніше.'); }
+    return msg.join(' ');
+  }
+  function R_goal() {
+    var g = goalById(S.p.id), c = GCOL[g.id] || GCOL.extra, p = pct(g), m = monthsOf(g), ins = insight(g);
+    return '<div class="head"><button type="button" class="back" data-act="back" aria-label="Назад">' + ic('left') + '</button><h1>' + esc(g.name) + '</h1>' + (g.status === 'paused' ? '<span class="badge">на паузі</span>' : '') + '</div>' +
+      '<div class="card"><div class="g-top"><span class="g-ico" style="background:' + c[1] + ';color:' + c[0] + '">' + ic(g.icon, 26) + '</span><span class="g-name"><b style="font-size:24px;font-weight:600">' + fmtC(g.saved, g.cur) + '</b><small>з ' + fmtC(g.target, g.cur) + '</small></span><span class="g-pct" style="color:' + c[0] + '">' + p + '%</span></div><span class="trk"><div class="bg"></div><div style="width:' + p + '%;background:' + c[0] + '"></div></span></div>' +
+      '<div class="pv"><div class="r2"><span>Залишилось</span><b>' + fmtC(Math.max(0, g.target - g.saved), g.cur) + '</b></div><div class="r2"><span>Щомісячний внесок</span><b>' + fmtC(g.monthly, g.cur) + '</b></div><div class="r2"><span>Місяців до цілі</span><b>' + (g.status === 'active' && m !== null ? m : '—') + '</b></div><div class="r2"><span>Орієнтовна дата</span><b>' + etaOf(g) + '</b></div><div class="r2"><span>Бажана дата</span><b>' + (g.desired ? g.desired.split('-').reverse().join('.') : 'не вказано') + '</b></div></div>' +
+      (ins ? '<div class="info">' + ins + '</div>' : '') +
+      '<div class="two"><button type="button" class="second" data-act="go" data-id="contribute">Внесок</button><button type="button" class="second" data-act="go" data-id="withdraw">Зняти</button><button type="button" class="second" data-act="goal-edit" data-id="' + g.id + '">Редагувати</button><button type="button" class="second" data-act="pause" data-id="' + g.id + '">' + (g.status === 'paused' ? 'Відновити' : 'Пауза') + '</button></div>' +
+      '<button type="button" class="primary" data-act="buy" data-id="' + g.id + '">Купити / завершити</button>' +
+      '<div class="sec"><h2>Історія</h2><span>' + g.hist.length + '</span></div><div class="list">' + hist(g) + '</div><p class="note">Пауза не видаляє відкладене: гроші лишаються зарезервованими.</p>';
+  }
+  function R_goal_new() {
+    var ed = S.p.id ? goalById(S.p.id) : null;
+    var n = S.gn = S.gn || { cur: ed ? ed.cur : 'USD', icon: ed ? ed.icon : 'laptop' };
+    var ICONS = ['laptop', 'shoes', 'plane', 'car', 'home', 'shield'];
+    S.calc = function () {
+      var t = parseFloat((($('g-t') || {}).value || '').replace(',', '.')) || 0, m = parseFloat((($('g-m') || {}).value || '').replace(',', '.')) || 0, saved = ed ? ed.saved : 0, d = ($('g-d') || {}).value;
+      var out = '';
+      if (t > 0 && m > 0) { var mo = Math.max(0, Math.ceil((t - saved) / m)); out = 'Орієнтовна дата покупки: <b>' + (mo === 0 ? 'вже можна' : dateAfter(mo)) + '</b> (' + mo + ' міс.).'; if (d) { var days = (new Date(d) - new Date(2026, 10, 11)) / 86400000, md = Math.max(1, Math.ceil(days / 30.44)), need = (t - saved) / md; out += need > m ? '<br>Щоб встигнути до бажаної дати, потрібно ' + fmtC(Math.ceil(need), n.cur) + ' на місяць.' : '<br>До бажаної дати ви встигаєте.'; } }
+      else out = 'Вкажіть суму цілі й щомісячний внесок, і я порахую дату.';
+      $('eta').innerHTML = out; $('ok').disabled = !(t > 0 && m > 0 && (($('g-n') || {}).value || '').trim());
+    };
+    return '<div class="head"><button type="button" class="back" data-act="back-gn" aria-label="Назад">' + ic('left') + '</button><h1>' + (ed ? 'Змінити ціль' : 'Нова ціль') + '</h1></div>' +
+      '<div class="fld"><label for="g-n">Назва</label><input class="inp" id="g-n" placeholder="Наприклад, iPhone 17 Pro" data-calc="1" value="' + (ed ? esc(ed.name) : '') + '"></div>' +
+      '<div class="grid2" style="grid-template-columns:1.3fr 1fr"><div class="fld"><label for="g-t">Скільки потрібно</label><input class="inp" id="g-t" inputmode="decimal" placeholder="0" data-calc="1" value="' + (ed ? ed.target : '') + '"></div><div class="fld"><span class="lab">Валюта</span><div class="chips" style="gap:4px">' + ['USD', 'EUR', 'UAH'].map(function (c) { return '<button type="button" class="pill" style="padding:0 10px" data-act="g-cur" data-id="' + c + '" aria-pressed="' + (n.cur === c) + '">' + c + '</button>'; }).join('') + '</div></div></div>' +
+      '<div class="fld"><label for="g-m">Скільки плануєте відкладати щомісяця</label><input class="inp" id="g-m" inputmode="decimal" placeholder="0" data-calc="1" value="' + (ed ? ed.monthly : '') + '"></div><div class="info" id="eta"></div>' +
+      '<div class="fld"><span class="lab">Значок</span><div class="chips">' + ICONS.map(function (i) { return '<button type="button" class="iconbtn" style="border-width:2px;border-color:' + (n.icon === i ? 'var(--accent)' : 'var(--line)') + '" data-act="g-icon" data-id="' + i + '" aria-label="Значок" aria-pressed="' + (n.icon === i) + '">' + ic(i, 22) + '</button>'; }).join('') + '</div></div>' +
+      '<div class="fld"><label for="g-d">Бажана дата (необов’язково)</label><input class="inp" id="g-d" type="date" data-calc="1" value="' + (ed ? ed.desired : '') + '"></div>' +
+      '<p class="note">Точна дата не обов’язкова: додаток сам порахує, коли ви зможете купити. Бажана дата лише ставить орієнтир.</p><button type="button" class="primary push" id="ok" data-act="goal-save" disabled>' + (ed ? 'Зберегти' : 'Створити ціль') + '</button>';
+  }
+  function R_contribute() {
+    var ag = activeGoals();
+    S.calc = function () {
+      var sum = 0, per = {}; ag.forEach(function (g) { var v = parseFloat((($('c-' + g.id) || {}).value || '0').replace(',', '.')) || 0; per[g.id] = v; sum += v * RATES[g.cur]; });
+      var F = free(), bad = sum > F + 0.01;
+      $('pv').innerHTML = '<div class="r2"><span>Усього вносите</span><b>' + conv(sum) + '</b></div><div class="r2"><span>Вільні гроші</span><b>' + conv(F) + '<span class="arrow">→</span>' + conv(F - sum) + '</b></div><div class="r2"><span>Відкладено</span><b>' + conv(pool()) + '<span class="arrow">→</span>' + conv(pool() + sum) + '</b></div><div class="r2"><span>Загальний капітал</span><b>без змін</b></div>';
+      $('err').innerHTML = bad ? '<div class="warn" role="alert">Вільних грошей не вистачає на ' + conv(sum - F) + '. Зменште внески.</div>' : '';
+      $('ok').disabled = !(sum > 0) || bad; S.cv = per;
+    };
+    return '<div class="head"><button type="button" class="back" data-act="back" aria-label="Назад">' + ic('left') + '</button><h1>Внести в цілі</h1></div><div class="info">Вільні гроші: <b>' + conv(free()) + '</b>. Внесок лише переносить гроші з вільних у відкладені. Рахунки й капітал не змінюються.</div>' +
+      ag.map(function (g) { var c = GCOL[g.id] || GCOL.extra; return '<div class="card"><div class="g-top"><span class="g-ico" style="background:' + c[1] + ';color:' + c[0] + ';width:36px;height:36px">' + ic(g.icon, 22) + '</span><span class="g-name"><b>' + esc(g.name) + '</b><small>за планом ' + fmtC(g.monthly, g.cur) + ' · зараз ' + fmtC(g.saved, g.cur) + '</small></span></div><div class="fld" style="margin-top:10px"><label for="c-' + g.id + '">Скільки вносите, ' + g.cur + '</label><input class="inp" id="c-' + g.id + '" inputmode="decimal" data-calc="1" value="' + g.monthly + '"></div></div>'; }).join('') +
+      '<div class="pv" id="pv"></div><div id="err"></div><p class="note">Планові внески нічого не змінюють, поки ви їх не підтвердите. Додаток сам нічого не розподіляє.</p><button type="button" class="primary push" id="ok" data-act="contrib-ok" disabled>Підтвердити внески</button>';
+  }
+  function deductUsd(accId, usd, cur) { var a = accById(accId); addBal(accId, cur, -Math.round(usd * RATES.USD / RATES[cur] * 100) / 100); }
+  function wdCalc() {
+    var w = S.wd, a = w.amount, T = total() / 42, P = pool() / 42, F = T - P, rows = [], warn = '', fix = '', ag = activeGoals().filter(function (g) { return g.cur === 'USD'; }), AP = ag.reduce(function (s, g) { return s + g.saved; }, 0);
+    var acc = accById(w.account), cur = w.cur && acc.bal.some(function (b) { return b.c === w.cur; }) ? w.cur : acc.bal[0].c, chargeCur = a * 42 / RATES[cur], have = balOf(acc, cur);
+    if (w.method === 'free') { if (F < a) warn = 'У вільних грошах лише ' + fmtC(F, 'USD') + '.'; }
+    else if (w.method === 'goal') { var g = goalById(w.goal); if (g.saved < a) { warn = 'У цілі «' + g.name + '» лише ' + fmtC(g.saved, 'USD') + '.'; fix = 'Розподілити пропорційно з усіх цілей'; } else rows.push({ g: g, before: g.saved, after: g.saved - a }); }
+    else { rows = ag.filter(function (g) { return g.saved > 0; }).map(function (g) { return { g: g, before: g.saved, after: g.saved - a * g.saved / AP }; }); if (AP < a) warn = 'Усього на активних цілях лише ' + fmtC(AP, 'USD') + '.'; }
+    var spent = w.method === 'free' ? true : w.spent;
+    if (spent && have < chargeCur - 0.001) warn = (warn ? warn + ' ' : '') + 'На балансі ' + cur + ' рахунку «' + acc.n + '» лише ' + fmtC(have, cur) + '.';
+    var newT = spent ? T - a : T, newP = w.method === 'free' ? P : P - a;
+    return { rows: rows, warn: warn, fix: fix, spent: spent, T: T, P: P, F: F, newT: newT, newP: newP, newF: newT - newP, ok: !warn, acc: acc, cur: cur, charge: chargeCur, have: have };
+  }
+  function m2(n) { return (Math.round(n * 100) / 100).toLocaleString('uk-UA', { maximumFractionDigits: 2 }) + ' $'; }
+  function R_withdraw() {
+    var w = S.wd, c = wdCalc(), ag = activeGoals();
+    function opt(id, t, s) { return '<button type="button" class="opt" data-act="wd-method" data-id="' + id + '" aria-pressed="' + (w.method === id) + '"><span>' + t + '<small>' + s + '</small></span><span class="rad"></span></button>'; }
+    var pv = c.rows.map(function (r) { return '<div class="r2"><span>' + esc(r.g.name) + '</span><b>' + m2(r.before) + '<span class="arrow">→</span>' + m2(r.after) + '</b></div>'; }).join('') +
+      '<div class="r2"><span>Загальний капітал</span><b>' + m2(c.T) + (c.newT !== c.T ? '<span class="arrow">→</span>' + m2(c.newT) : ' (без змін)') + '</b></div><div class="r2"><span>Вільні гроші</span><b>' + m2(c.F) + '<span class="arrow">→</span>' + m2(c.newF) + '</b></div>' +
+      '<div class="r2"><span>' + esc(c.acc.n) + ' ' + c.cur + '</span><b>' + (c.spent ? fmtC(c.have, c.cur) + '<span class="arrow">→</span>' + fmtC(c.have - c.charge, c.cur) : 'без змін') + '</b></div>';
+    return '<div class="head"><button type="button" class="back" data-act="back" aria-label="Назад">' + ic('left') + '</button><h1>Зняти з цілей</h1></div>' +
+      '<div><div class="lab" style="margin-bottom:8px">Скільки потрібно, $</div><div class="chips">' + [50, 100, 200, 500].map(function (a) { return '<button type="button" class="pill" data-act="wd-amount" data-id="' + a + '" aria-pressed="' + (w.amount === a) + '">' + a + ' $</button>'; }).join('') + '</div></div>' +
+      '<div><div class="lab" style="margin-bottom:8px">Звідки взяти</div><div style="display:flex;flex-direction:column;gap:8px">' + opt('free', 'З вільних грошей', 'цілі не чіпаємо') + opt('goal', 'З однієї цілі', 'оберіть, з якої') + opt('prop', 'Пропорційно з усіх активних цілей', 'за розміром відкладеного') + '</div>' +
+      (w.method === 'goal' ? '<div class="chips" style="margin-top:8px">' + ag.filter(function (g) { return g.cur === 'USD'; }).map(function (g) { return '<button type="button" class="pill" data-act="wd-goal" data-id="' + g.id + '" aria-pressed="' + (w.goal === g.id) + '">' + esc(g.name) + ' · ' + g.saved + ' $</button>'; }).join('') + '</div>' : '') + '</div>' +
+      '<div class="grid2"><div class="fld"><label for="wd-acc">З якого рахунку витрачено</label><select class="inp" id="wd-acc" data-wsel="acc">' + activeAcc().map(function (a) { return '<option value="' + a.id + '"' + (w.account === a.id ? ' selected' : '') + '>' + esc(a.n) + '</option>'; }).join('') + '</select></div><div class="fld"><label for="wd-cur">Валюта</label><select class="inp" id="wd-cur" data-wsel="cur">' + c.acc.bal.map(function (b) { return '<option value="' + b.c + '"' + (c.cur === b.c ? ' selected' : '') + '>' + b.c + '</option>'; }).join('') + '</select></div></div>' +
+      (w.method === 'free' ? '' : '<button type="button" class="opt" data-act="wd-spent" aria-pressed="' + w.spent + '"><span>Гроші витрачено<small>' + (w.spent ? 'зменшимо рахунок і капітал' : 'просто повертаємо у вільні гроші') + '</small></span><span class="rad"></span></button>') +
+      '<div class="pv" aria-live="polite">' + pv + '</div>' + (c.warn ? '<div class="warn" role="alert">' + c.warn + (c.fix ? '<br><button type="button" data-act="wd-fix">' + c.fix + '</button>' : '') + '</div>' : '') +
+      '<button type="button" class="primary push" data-act="wd-confirm"' + (c.ok ? '' : ' disabled') + '>Підтвердити</button>';
+  }
+  function R_buy() {
+    var g = goalById(S.p.id), B = S.b = S.b || { step: 1, price: g.target, useFree: false, acc: 'wise', cur: 'USD' };
+    var steps = '<div class="steps" aria-hidden="true">' + [1, 2, 3].map(function (i) { return '<i class="' + (B.step >= i ? 'on' : '') + '"></i>'; }).join('') + '</div>';
+    var head = '<div class="head"><button type="button" class="back" data-act="buy-back" aria-label="Назад">' + ic('left') + '</button><h1>Купити: ' + esc(g.name) + '</h1></div>' + (B.step <= 3 ? steps : '');
+    var price = B.price, short = Math.max(0, price - g.saved), used = Math.min(g.saved, price), acc = accById(B.acc);
+    if (!acc.bal.some(function (b) { return b.c === B.cur; })) B.cur = acc.bal[0].c;
+    var priceUah = price * RATES[g.cur], cross = B.cur !== g.cur, base = priceUah / RATES[B.cur], fee = cross ? base * 0.01 : 0, charge = base + fee, have = balOf(acc, B.cur);
+    var freeUah = short * RATES[g.cur];
+    if (B.step === 1) {
+      S.calc = function () { var v = parseFloat((($('b-price') || {}).value || '').replace(',', '.')) || 0; B.price = v; var sh = Math.max(0, v - g.saved); $('sh').innerHTML = sh > 0 ? '<div class="warn" role="alert">Не вистачає ' + fmtC(sh, g.cur) + '. Решту можна взяти з вільних грошей, але лише з вашого дозволу.<br><button type="button" data-act="b-free">' + (B.useFree ? '✓ Беру з вільних грошей' : 'Взяти з вільних грошей') + '</button></div>' : '<div class="info">Відкладеного достатньо, щоб оплатити покупку повністю.</div>'; $('ok').disabled = !(v > 0) || (sh > 0 && (!B.useFree || sh * RATES[g.cur] > free() + 0.01)); };
+      return head + '<div class="pv"><div class="r2"><span>Ціль</span><b>' + fmtC(g.target, g.cur) + '</b></div><div class="r2"><span>Відкладено</span><b>' + fmtC(g.saved, g.cur) + '</b></div><div class="r2"><span>Залишок до цілі</span><b>' + fmtC(Math.max(0, g.target - g.saved), g.cur) + '</b></div></div>' +
+        '<div class="fld"><label for="b-price">Скільки заплатили насправді, ' + g.cur + '</label><input class="inp" id="b-price" inputmode="decimal" data-calc="1" value="' + B.price + '"></div><div id="sh"></div><button type="button" class="primary push" id="ok" data-act="b-next">Далі: рахунок оплати</button>';
+    }
+    if (B.step === 2) {
+      var bad = have < charge - 0.001;
+      return head + '<h2>З якого рахунку платите?</h2><div class="fld"><label for="b-acc">Рахунок</label><select class="inp" id="b-acc" data-bsel="acc">' + activeAcc().map(function (a) { return '<option value="' + a.id + '"' + (B.acc === a.id ? ' selected' : '') + '>' + esc(a.n) + '</option>'; }).join('') + '</select></div>' +
+        '<div class="fld"><span class="lab">Валюта на цьому рахунку</span><div class="chips">' + acc.bal.map(function (b) { return '<button type="button" class="pill" data-act="b-cur" data-id="' + b.c + '" aria-pressed="' + (B.cur === b.c) + '">' + fmtC(b.a, b.c) + '</button>'; }).join('') + '</div></div>' +
+        '<div class="pv"><div class="r2"><span>Ціна</span><b>' + fmtC(price, g.cur) + '</b></div>' + (cross ? '<div class="r2"><span>Курс · дата</span><b>1 ' + g.cur + ' = ' + num(RATES[g.cur] / RATES[B.cur], 4) + ' ' + B.cur + ' · ' + DATE0 + '</b></div><div class="r2"><span>Комісія за конвертацію (1%)</span><b>' + fmtC(fee, B.cur) + '</b></div>' : '') + '<div class="r2"><span>Спишеться з рахунку</span><b>' + fmtC(charge, B.cur) + '</b></div></div>' +
+        (bad ? '<div class="warn" role="alert">На цьому балансі лише ' + fmtC(have, B.cur) + '. Оберіть інший.</div>' : '') + '<button type="button" class="primary push" data-act="b-next"' + (bad ? ' disabled' : '') + '>Далі: підсумок</button>';
+    }
+    if (B.step === 3) {
+      var T = total(), P = pool(), F = T - P, dT = priceUah + fee * RATES[B.cur], newP = P - used * RATES[g.cur], newT = T - dT, newF = newT - newP;
+      return head + '<h2>Що зміниться</h2><div class="pv"><div class="r2"><span>' + esc(acc.n) + ' ' + B.cur + '</span><b>' + fmtC(have, B.cur) + '<span class="arrow">→</span>' + fmtC(have - charge, B.cur) + '</b></div><div class="r2"><span>Ціль «' + esc(g.name) + '»</span><b>' + fmtC(g.saved, g.cur) + '<span class="arrow">→</span>' + fmtC(g.saved - used, g.cur) + '</b></div><div class="r2"><span>Відкладено</span><b>' + conv(P) + '<span class="arrow">→</span>' + conv(newP) + '</b></div><div class="r2"><span>Вільні гроші</span><b>' + conv(F) + '<span class="arrow">→</span>' + conv(newF) + '</b></div><div class="r2"><span>Загальний капітал</span><b>' + conv(T) + '<span class="arrow">→</span>' + conv(newT) + '</b></div></div>' +
+        '<div class="info">Буде записана одна витрата «' + esc(g.name) + '» на ' + fmtC(charge, B.cur) + '. Вона не задвоїться: вона зменшує і рахунок, і капітал, а відкладене лише на ' + fmtC(used, g.cur) + '.' + (short > 0 ? ' Решта ' + fmtC(short, g.cur) + ' береться з вільних грошей.' : '') + '</div><button type="button" class="primary push" data-act="b-confirm">Підтвердити покупку</button>';
+    }
+    return '<div class="head"><h1>Покупку записано</h1></div><div class="toast">Витрата збережена, баланси перераховано.</div><p class="note">Що зробити з ціллю?</p><div style="display:flex;flex-direction:column;gap:10px"><button type="button" class="primary" data-act="b-complete">Позначити виконаною</button><button type="button" class="second" data-act="b-newtarget">Залишити активною з новою сумою</button><button type="button" class="second" data-act="b-archive">В архів</button></div><p class="note">Ціль не видаляється. Історія внесків і покупки зберігається.</p>';
+  }
+
+  /* ---------- cats screens ---------- */
+  function R_cats() {
+    return '<div class="head"><button type="button" class="back" data-act="back" aria-label="Назад">' + ic('left') + '</button><h1>Колекція</h1></div>' +
+      (S.cats.length ? '<div class="cat-grid">' + S.cats.map(function (x) { var c = CATS[x.id]; return '<button type="button" class="cat-card" data-act="open-cat" data-id="' + x.id + '">' + catSvg(x.id) + '<b>' + c.n + '</b><span class="rar r-' + c.r + '">' + RAR[c.r] + '</span><small>' + x.date + '</small></button>'; }).join('') + '</div>' : '<p class="note">Тут оселяться коти, яких ви зустрінете. Поки ніхто не прийшов.</p>') +
+      '<p class="note">У колекції лише ті, кого ви вже зустріли. Нові друзі з’являються самі, коли ви робите щось важливе.</p>';
+  }
+  function R_cat() {
+    var id = S.p.id, c = CATS[id], x = S.cats.filter(function (k) { return k.id === id; })[0] || { date: '' };
+    return '<div class="head"><button type="button" class="back" data-act="back" aria-label="Назад">' + ic('left') + '</button><h1>' + c.n + '</h1></div><div class="stage">' + catSvg(id) + '<span class="rar r-' + c.r + '">' + RAR[c.r] + '</span><p style="margin:10px 8px 6px;text-align:center;font-size:15px;line-height:1.45">' + c.story + '</p><div class="sub" style="margin:0">Зустрілись ' + x.date + '</div></div><button type="button" class="second" data-act="replay" data-id="' + id + '">Показати появу ще раз</button>';
+  }
+  var CONCEPTS = [
+    ['Кошеня-Зірочка', 'c', 'Перша виконана ціль'], ['Кіт-Монетка', 'c', 'Перший справжній внесок у ціль'], ['Кіт-Терпеливець', 'c', 'Три місяці поспіль із внесками'], ['Кіт-Записничок', 'c', 'Перше місячне закриття'],
+    ['Кіт-Мандрівник', 'r', 'Виконана ціль «подорож»'], ['Кіт-Ключник', 'r', 'Перша покупка через ціль'], ['Кіт-Скарбничка', 'r', 'Відкладено 1 000 $ в еквіваленті'], ['Кіт-Метеорик', 'r', 'Ціль виконана раніше за орієнтовну дату'],
+    ['Місячний Хранитель', 'e', 'Шість місяців поспіль із внесками'], ['Кіт-Картограф', 'e', 'Виконано цілі у трьох різних валютах'], ['Кіт-Кристал', 'e', 'Відкладено 10 000 $ в еквіваленті'], ['Кіт-Дракончик', 'e', 'Виконано три цілі'],
+    ['Кіт-Домовик', 'l', 'Виконана ціль категорії «житло»'], ['Королівський Кіт', 'l', 'Дванадцять місяців поспіль із внесками'], ['Кіт-Фенікс', 'l', 'Відновлена з паузи ціль, виконана до кінця'],
+    ['Кіт-Незалежний', 'm', 'Капітал покриває витрати на 25 років за планом'], ['Космічний Кіт', 'm', 'Виконано десять цілей']
+  ];
+  function R_catsheet() {
+    return '<div class="head"><button type="button" class="back" data-act="back" aria-label="Назад">' + ic('left') + '</button><h1>Концепт колекції</h1></div><div class="info">Це лише для дизайну. У справжньому додатку список прихований: користувач бачить лише тих, кого вже зустрів. Умови нижче теж ніколи не показуються.</div>' +
+      '<div class="cat-grid">' + ['first', 'persist', 'trav', 'home', 'crystal', 'moon'].map(function (id) { var c = CATS[id]; return '<div class="cat-card">' + catSvg(id) + '<b>' + c.n + '</b><span class="rar r-' + c.r + '">' + RAR[c.r] + '</span></div>'; }).join('') + '</div>' +
+      '<div class="sec"><h2>17 стартових котів</h2><span>4 · 4 · 4 · 3 · 2</span></div><div class="list">' + CONCEPTS.map(function (k) { return '<div class="row" style="min-height:54px"><span class="l"><span style="min-width:0"><span style="display:block">' + k[0] + '</span><small>' + k[2] + '</small></span></span><span class="r"><span class="rar r-' + k[1] + '">' + RAR[k[1]] + '</span></span></div>'; }).join('') + '</div><p class="note">Коти видаються лише за звички й завершені цілі, а не за суму чи витрати.</p>';
+  }
+
+  /* ---------- forecast, plan, more ---------- */
+  function poolAt(m) { return GOALS.filter(function (g) { return g.status === 'active'; }).reduce(function (s, g) { return s + Math.min(g.target * RATES[g.cur], g.saved * RATES[g.cur] + g.monthly * RATES[g.cur] * m); }, 0) + GOALS.filter(function (g) { return g.status === 'paused'; }).reduce(function (s, g) { return s + g.saved * RATES[g.cur]; }, 0); }
+  function scenEff() { var s = S.scen; return { monthly: (s.inc ? 500 : 0) + (s.cut ? 200 : 0), once: (s.laptop ? 1500 : 0) + (s.trip ? 2000 : 0) }; }
+  function capAt(m, ws) { var e = ws ? scenEff() : { monthly: 0, once: 0 }; return total() / 42 + m * (INCOME - EXPENSES + e.monthly) - (m >= 1 ? e.once : 0); }
+  function R_forecast() {
+    var W = 354, H = 170, L = 8, Rr = 8, T = 14, B = 22, N = S.period, any = S.scen.inc || S.scen.cut || S.scen.laptop || S.scen.trip, base = [], sc = [], hp = [-3, -2, -1, 0].map(function (m) { return [m, total() / 42 + m * (INCOME - EXPENSES)]; });
+    for (var m = 0; m <= N; m++) { base.push([m, capAt(m, false)]); sc.push([m, capAt(m, true)]); }
+    var all = hp.concat(any ? sc : base).concat(base), xs = all.map(function (p) { return p[0]; }), ys = all.map(function (p) { return p[1]; }), x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys), pad = (y1 - y0) * 0.1 || 100; y0 -= pad; y1 += pad;
+    function X(v) { return L + (v - x0) / (x1 - x0) * (W - L - Rr); } function Y(v) { return T + (1 - (v - y0) / (y1 - y0)) * (H - T - B); }
+    function path(pts) { return pts.map(function (p, i) { return (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1); }).join(' '); }
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Прогноз капіталу на ' + N + ' міс."><line x1="' + X(0) + '" x2="' + X(0) + '" y1="' + T + '" y2="' + (H - B) + '" stroke="var(--line)"/><path d="' + path(hp) + '" fill="none" stroke="var(--ink)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="' + path(base) + '" fill="none" stroke="' + (any ? 'var(--muted)' : 'var(--accent)') + '" stroke-width="2.4" stroke-dasharray="5 5" stroke-linecap="round"/>' + (any ? '<path d="' + path(sc) + '" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>' : '') + '<circle cx="' + X(0) + '" cy="' + Y(total() / 42) + '" r="4" fill="var(--ink)"/><text x="' + X(0) + '" y="' + (H - 6) + '" font-size="10" fill="var(--muted)" text-anchor="middle">зараз</text><text x="' + (W - Rr) + '" y="' + (H - 6) + '" font-size="10" fill="var(--muted)" text-anchor="end">+' + N + ' міс.</text></svg>';
+    function pb(n) { return '<button type="button" data-act="period" data-id="' + n + '" aria-pressed="' + (S.period === n) + '">' + n + ' міс.</button>'; }
+    function sp(id, l) { return '<button type="button" class="pill" data-act="scen" data-id="' + id + '" aria-pressed="' + S.scen[id] + '">' + l + '</button>'; }
+    var cb = capAt(N, false), cs = capAt(N, true), fr = cs - poolAt(N) / 42;
+    return '<h1>Прогноз</h1><div class="seg" role="group" aria-label="Період">' + pb(1) + pb(3) + pb(6) + pb(12) + '</div><div class="chart">' + svg + '<div class="legend"><span><i style="border-color:var(--ink)"></i>факт</span><span><i style="border-color:' + (any ? 'var(--muted)' : 'var(--accent)') + ';border-top-style:dashed"></i>прогноз</span>' + (any ? '<span><i style="border-color:var(--accent)"></i>зі сценарієм</span>' : '') + '</div></div>' +
+      '<div class="pv"><div class="r2"><span>Зараз (факт)</span><b>' + fmtC(total() / 42, 'USD') + '</b></div><div class="r2"><span>Через ' + N + ' міс. (прогноз)</span><b>' + fmtC(cb, 'USD') + '</b></div>' + (any ? '<div class="r2"><span>Зі сценарієм</span><b style="color:var(--accent)">' + fmtC(cs, 'USD') + '</b></div>' : '') + '<div class="r2"><span>Вільні гроші (після відкладань)</span><b>' + fmtC(fr, 'USD') + '</b></div></div>' +
+      '<div><div class="lab" style="margin-bottom:8px">Що, якщо… (реальні дані не змінюються)</div><div class="chips">' + sp('inc', '+500 $ до доходу') + sp('cut', '−200 $ витрат') + sp('laptop', 'Ноутбук 1 500 $') + sp('trip', 'Відпустка 2 000 $') + '</div></div><p class="note">Прогноз = капітал + плановий дохід (' + fmtC(INCOME, 'USD') + ') − планові витрати (' + fmtC(EXPENSES, 'USD') + ') щомісяця. Відкладання на цілі капітал не зменшує. Це оцінка, а не гарантія.</p>';
+  }
+  function R_plan() {
+    var EXP = [['Оренда', 250, 'фікс.'], ['Комунальні', 60, 'фікс.'], ['Продукти', 150, 'змінні'], ['Тварини', 40, 'змінні'], ['Транспорт', 30, 'змінні'], ['Підписки', 20, 'фікс.'], ['Страхування', 20, 'фікс.'], ['Здоров’я', 30, 'змінні']];
+    return '<div class="head"><button type="button" class="back" data-act="back" aria-label="Назад">' + ic('left') + '</button><h1>Дохід і витрати</h1></div><div class="sec"><h2>Дохід на місяць</h2></div>' +
+      '<div class="list"><div class="row"><span class="l"><span>Зарплата<small>щомісяця, 5 числа</small></span></span><span class="r">1 000 $<small><span class="badge">заплановано</span></small></span></div><div class="row" style="min-height:48px"><span class="l" style="font-weight:400;color:var(--muted)">→ Готівка $</span><span class="r">400 $</span></div><div class="row" style="min-height:48px"><span class="l" style="font-weight:400;color:var(--muted)">→ Рахунок ФОП</span><span class="r">600 $</span></div></div>' +
+      '<p class="note">Плановий дохід впливає лише на прогноз. На баланс він потрапляє, коли ви натиснете «Прийшло».</p><div class="sec"><h2>Планові витрати</h2><span>' + fmtC(EXPENSES, 'USD') + ' на місяць</span></div><div class="list">' + EXP.map(function (e) { return '<div class="row" style="min-height:48px"><span class="l" style="font-weight:400">' + e[0] + ' <span class="badge">' + e[2] + '</span></span><span class="r">' + fmtC(e[1], 'USD') + '</span></div>'; }).join('') + '</div><p class="note">Планові витрати не списуються з рахунків. Щодня вести витрати не потрібно.</p><button type="button" class="ghost">Закрити місяць (факт)</button>';
+  }
+  function R_more() {
+    var L = [['a', 'А · Синій', ['#1F4DB8', '#4C74D2', '#7FA0E3']], ['b', 'Б · Ніч', ['#7FB2FF', '#5E8FD6', '#335185']], ['c', 'В · Графіт', ['#2B2B2B', '#8A8885', '#1F6F5E']]];
+    function tog(act, label, on, sub) { return '<button type="button" class="opt" data-act="' + act + '" aria-pressed="' + on + '"><span>' + label + '<small>' + sub + '</small></span><span class="rad"></span></button>'; }
+    return '<h1>Ще</h1><div class="list"><button type="button" class="row" data-act="go" data-id="plan"><span class="l">Дохід і витрати</span>' + ic('right', 18, 'var(--muted)') + '</button><button type="button" class="row"><span class="l">Закрити місяць</span>' + ic('right', 18, 'var(--muted)') + '</button><button type="button" class="row"><span class="l">Курси валют</span>' + ic('right', 18, 'var(--muted)') + '</button><button type="button" class="row" data-act="go" data-id="cats"><span class="l">Колекція котиків</span>' + ic('right', 18, 'var(--muted)') + '</button></div>' +
+      '<div class="sec"><h2>Для дизайну</h2></div><div class="list"><button type="button" class="row" data-act="go" data-id="catsheet"><span class="l">Концепт колекції котів</span>' + ic('right', 18, 'var(--muted)') + '</button><button type="button" class="row" data-act="demo-unlock" data-id="trav"><span class="l">Показати появу кота</span>' + ic('right', 18, 'var(--muted)') + '</button></div>' +
+      '<div class="sec"><h2>Анімації</h2></div>' + tog('toggle-calm', 'Без руху', S.calm, 'покаже появу кота без анімацій') + tog('toggle-sound', 'Звук', S.sound, 'за замовчуванням вимкнено') +
+      '<div class="sec"><h2>Вигляд</h2></div><div class="looks">' + L.map(function (l) { return '<button type="button" class="look" data-act="look" data-id="' + l[0] + '" aria-pressed="' + (S.look === l[0]) + '"><span>' + l[1] + '</span><span class="sws">' + l[2].map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</span></button>'; }).join('') + '</div><p class="note">Прототип: цифри вигадані, нічого не зберігається. Це не ваш справжній додаток.</p>';
+  }
+
+  /* ---------- router ---------- */
+  var TABS = [['home', 'Головна', 'tabHome'], ['accounts', 'Рахунки', 'tabAcc'], ['goals', 'Цілі', 'tabGoal'], ['forecast', 'Прогноз', 'tabFc'], ['more', 'Ще', 'tabMore']];
+  var PARENT = { account: 'accounts', 'acc-menu': 'accounts', 'add-cur': 'accounts', 'acc-new': 'accounts', money: 'accounts', xfer: 'accounts', tx: 'accounts', archive: 'accounts', goal: 'goals', 'goal-new': 'goals', contribute: 'goals', withdraw: 'goals', buy: 'goals', cats: 'goals', cat: 'goals', plan: 'more', catsheet: 'more' };
+  var R = { home: R_home, accounts: R_accounts, account: R_account, 'acc-menu': R_acc_menu, 'add-cur': R_add_cur, 'acc-new': R_acc_new, money: R_money, xfer: R_xfer, tx: R_tx, archive: R_archive, goals: R_goals, goal: R_goal, 'goal-new': R_goal_new, contribute: R_contribute, withdraw: R_withdraw, buy: R_buy, cats: R_cats, cat: R_cat, catsheet: R_catsheet, forecast: R_forecast, plan: R_plan, more: R_more };
+  function toastHtml() { var t = S.toast; S.toast = ''; return t ? '<div class="toast" role="status">' + t + '</div>' : ''; }
+  function render(keep) {
+    var saved = {}; if (keep) { [].forEach.call(document.querySelectorAll('#view input, #view select'), function (el) { if (el.id) saved[el.id] = el.value; }); }
+    S.calc = null; document.body.setAttribute('data-look', S.look); document.body.classList.toggle('calm', S.calm);
+    $('view').innerHTML = toastHtml() + R[S.route]();
+    if (keep) { Object.keys(saved).forEach(function (id) { var el = $(id); if (el) el.value = saved[id]; }); }
+    var act = PARENT[S.route] || S.route;
+    $('tabs').innerHTML = TABS.map(function (t) { return '<button type="button" class="tab" data-act="tab" data-id="' + t[0] + '"' + (act === t[0] ? ' aria-current="page"' : '') + '>' + ic(t[2], 23) + t[1] + '</button>'; }).join('');
+    if (S.calc) S.calc();
+    if (!keep) $('view').scrollTop = 0;
+  }
+  function go(r, p) { S.stack.push([S.route, S.p]); S.route = r; S.p = p || {}; S.menu = false; render(); }
+  function back() { var x = S.stack.pop(); if (x) { S.route = x[0]; S.p = x[1]; } else { S.route = 'home'; S.p = {}; } render(); }
+  function tabTo(r) { S.stack = []; S.route = r; S.p = {}; S.menu = false; S.m = null; S.x = null; S.b = null; S.n = null; S.gn = null; render(); }
+  function val(id) { return ($(id) || {}).value || ''; }
+  function fnum(id) { return parseFloat(val(id).replace(',', '.')) || 0; }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-act]');
+    if (!t) { if (S.menu) { S.menu = false; render(); } return; }
+    var a = t.getAttribute('data-act'), id = t.getAttribute('data-id'), keep = false;
+    if (a === 'tab') return tabTo(id);
+    if (a === 'go') { if (id === 'acc-new') S.n = null; if (id === 'withdraw') S.wd.msg = ''; if (id === 'xfer') S.x = null; return go(id, { acc: S.p.acc }); }
+    if (a === 'back') return back();
+    if (a === 'back-new') { S.n = null; return back(); }
+    if (a === 'back-x') { S.x = null; return back(); }
+    if (a === 'back-gn') { S.gn = null; return back(); }
+    if (a === 'toggle-menu') S.menu = !S.menu;
+    else if (a === 'pick-cur') { S.cur = id; S.menu = false; }
+    else if (a === 'look') { S.look = id; try { localStorage.setItem('proto-look', id); } catch (er) {} }
+    else if (a === 'open-acc') return go('account', { acc: id });
+    else if (a === 'acc-filter') S.p.f = id;
+    else if (a === 'acc-cur') S.p.c = S.p.c === id ? null : id;
+    else if (a === 'money') { S.m = null; return go('money', { acc: S.p.acc, mode: id }); }
+    else if (a === 'm-cur') { S.m.cur = id; keep = true; }
+    else if (a === 'why') { $('f-why').value = id; if (S.calc) S.calc(); return; }
+    else if (a === 'money-ok') {
+      var acc = accById(S.p.acc), mode = S.p.mode, amt = fnum('f-amt'), sign = (mode === 'in' || mode === 'add') ? 1 : -1, cur = S.m.cur, d = (val('f-date') || '2026-11-11').split('-').reverse().join('.'), why = val('f-why').trim();
+      addTx({ acc: acc.id, type: mode, amt: sign * amt, cur: cur, date: d, note: why, eff: [[acc.id, cur, sign * amt]] });
+      var msg = 'Збережено: ' + fmtS(sign * amt, cur) + '.';
+      if ((mode === 'in' || mode === 'out') && S.m.rep && S.m.rep !== 'no') { RECUR.push({ id: 'r' + (++txid), acc: acc.id, amt: sign * amt, cur: cur, freq: S.m.rep, day: parseInt(val('m-day') || '5', 10) || 5, note: why || (mode === 'in' ? 'Надходження' : 'Платіж'), auto: !!S.m.auto, pending: false }); msg += ' Повторюватиметься ' + FREQ[S.m.rep] + (S.m.auto ? ' автоматично.' : ', я спитаю, коли гроші прийдуть.'); }
+      S.m = null; S.toast = msg; S.stack.pop(); S.route = 'account'; S.p = { acc: acc.id }; return render();
+    }
+    else if (a === 'xfer') { var from = S.p.acc; S.x = null; go('xfer', { acc: from }); return; }
+    else if (a === 'xfer-ok') {
+      var X = S.x, r = X.res, fa = accById(X.from), ta = accById(X.to);
+      var A = addTx({ acc: fa.id, type: 'xfer', amt: -r.amt, cur: X.fc, date: DATE0, note: 'Переказ у ' + ta.n, rel: ta.n, fee: r.fee || 0, rate: r.rate, to: '+' + fmtC(r.recv, X.tc), eff: [[fa.id, X.fc, -(r.amt + r.fee)], [ta.id, X.tc, r.recv]] });
+      TX.unshift({ id: ++txid, acc: ta.id, type: 'xfer', amt: r.recv, cur: X.tc, date: DATE0, note: 'Переказ із ' + fa.n, rel: fa.n, rate: r.rate, link: A.id });
+      S.x = null; S.toast = 'Переказ виконано. Це одна операція, видна на обох рахунках.'; S.stack = [['accounts', {}]]; S.route = 'account'; S.p = { acc: fa.id }; return render();
+    }
+    else if (a === 'open-tx') return go('tx', { id: id });
+    else if (a === 'del-tx') { var tx = TX.filter(function (x) { return x.id === Number(id); })[0]; applyEff(tx.eff, -1); TX.splice(TX.indexOf(tx), 1); S.toast = 'Операцію видалено, баланси перераховано.'; return back(); }
+    else if (a === 'sel') { S.sel = id; keep = true; }
+    else if (a === 'add-cur-ok') { var accx = accById(S.p.acc), v = fnum('f-init'); if (!S.sel) return; addTx({ acc: accx.id, type: 'init', amt: v, cur: S.sel, date: DATE0, note: 'Початковий баланс', eff: [[accx.id, S.sel, v]] }); if (!v) addBal(accx.id, S.sel, 0); S.toast = 'Валюту ' + S.sel + ' додано до рахунку.'; S.sel = null; S.stack.pop(); S.stack.pop(); S.route = 'account'; S.p = { acc: accx.id }; return render(); }
+    else if (a === 'n-type') { S.n.type = id; keep = true; }
+    else if (a === 'n-color') { S.n.color = id; keep = true; }
+    else if (a === 'n-cur') { var ix = S.n.curs.indexOf(id); if (ix >= 0) { if (S.n.curs.length > 1) S.n.curs.splice(ix, 1); } else S.n.curs.push(id); S.n.name = val('f-name'); render(true); return; }
+    else if (a === 'acc-create') {
+      var nm = val('f-name').trim() || 'Новий рахунок', n = S.n, nid = 'a' + (++txid), bals = n.curs.map(function (c) { var inp = document.querySelector('.ini[data-c="' + c + '"]'); return { c: c, a: parseFloat(((inp && inp.value) || '0').replace(',', '.')) || 0 }; });
+      ACCOUNTS.push({ id: nid, n: nm, type: n.type, color: n.color, bal: bals }); S.n = null; S.toast = 'Рахунок «' + esc(nm) + '» створено. Початкові баланси не вважаються доходом.'; S.stack = []; S.route = 'accounts'; S.p = {}; return render();
+    }
+    else if (a === 'archive-ok') { accById(S.p.acc).archived = true; S.toast = 'Рахунок архівовано. Історія збережена.'; return tabTo('accounts'); }
+    /* goals */
+    else if (a === 'open-goal') return go('goal', { id: id });
+    else if (a === 'goal-new') { S.gn = null; return go('goal-new', {}); }
+    else if (a === 'goal-edit') { S.gn = null; return go('goal-new', { id: id }); }
+    else if (a === 'g-cur') { S.gn.cur = id; keep = true; }
+    else if (a === 'g-icon') { S.gn.icon = id; keep = true; }
+    else if (a === 'goal-save') {
+      var ed = S.p.id ? goalById(S.p.id) : null, o = { name: val('g-n').trim(), target: fnum('g-t'), amt: fnum('g-m'), cur: S.gn.cur, icon: S.gn.icon, desired: val('g-d'), freq: S.gn.freq, auto: S.gn.auto, day: parseInt(val('g-day') || '5', 10) || 5 };
+      if (ed) { for (var k in o) ed[k] = o[k]; syncMonthly(ed); } else { o.id = 'g' + (++txid); o.saved = 0; o.status = 'active'; o.hist = []; syncMonthly(o); GOALS.push(o); }
+      S.gn = null; S.toast = 'Ціль збережено. Дату покупки перераховано.'; return back();
+    }
+    else if (a === 'pause') { var gp = goalById(id); gp.status = gp.status === 'paused' ? 'active' : 'paused'; S.toast = gp.status === 'paused' ? 'Ціль на паузі. Відкладене лишається зарезервованим.' : 'Ціль відновлено.'; }
+    else if (a === 'contrib-ok') { activeGoals().forEach(function (g) { var v = S.cv[g.id] || 0; if (v > 0) { g.saved += v; g.hist.unshift(['contrib', v, DATE0, 'Підтверджений внесок']); } }); S.toast = 'Внески підтверджено. Капітал і рахунки не змінились.'; return back(); }
+    else if (a === 'wd-amount') S.wd.amount = Number(id); else if (a === 'wd-method') S.wd.method = id; else if (a === 'wd-goal') S.wd.goal = id; else if (a === 'wd-spent') S.wd.spent = !S.wd.spent; else if (a === 'wd-fix') S.wd.method = 'prop';
+    else if (a === 'wd-confirm') { var c = wdCalc(); if (c.ok) { c.rows.forEach(function (r) { r.g.saved = Math.round(r.after * 100) / 100; r.g.hist.unshift(['withdraw', Math.round((r.before - r.after) * 100) / 100, DATE0, '']); }); if (c.spent) { addBal(c.acc.id, c.cur, -Math.round(c.charge * 100) / 100); } S.toast = 'Готово: ' + m2(S.wd.amount) + ' ' + (c.spent ? 'знято й витрачено' : 'повернуто у вільні гроші') + '.'; return back(); } }
+    else if (a === 'buy') { S.b = null; return go('buy', { id: id }); }
+    else if (a === 'buy-back') { if (S.b && S.b.step > 1 && S.b.step <= 3) { S.b.step--; } else { S.b = null; return back(); } }
+    else if (a === 'b-free') { S.b.useFree = !S.b.useFree; keep = true; }
+    else if (a === 'b-next') { S.b.step++; }
+    else if (a === 'b-cur') S.b.cur = id;
+    else if (a === 'b-confirm') {
+      var g = goalById(S.p.id), B = S.b, acc2 = accById(B.acc), priceU = B.price * RATES[g.cur], cross = B.cur !== g.cur, base = priceU / RATES[B.cur], fee = cross ? base * 0.01 : 0, charge = Math.round((base + fee) * 100) / 100, used = Math.min(g.saved, B.price);
+      addTx({ acc: acc2.id, type: 'out', amt: -charge, cur: B.cur, date: DATE0, note: 'Покупка: ' + g.name + (cross ? ' (курс ' + num(RATES[g.cur] / RATES[B.cur], 4) + ', комісія ' + fmtC(fee, B.cur) + ')' : ''), eff: [[acc2.id, B.cur, -charge]] });
+      g.saved = Math.round((g.saved - used) * 100) / 100; g.hist.unshift(['purchase', B.price, DATE0, 'з рахунку ' + acc2.n]); B.step = 4;
+    }
+    else if (a === 'b-complete') { var g2 = goalById(S.p.id); g2.saved = 0; g2.status = 'done'; S.b = null; S.toast = 'Ціль виконано. Історію збережено.'; var got = unlock('first'); S.stack = []; S.route = 'goals'; S.p = {}; render(); return; }
+    else if (a === 'b-newtarget') { var g3 = goalById(S.p.id); S.b = null; S.gn = null; S.stack = [['goals', {}]]; S.route = 'goal-new'; S.p = { id: g3.id }; return render(); }
+    else if (a === 'b-archive') { var g4 = goalById(S.p.id); g4.saved = 0; g4.status = 'archived'; S.b = null; S.toast = 'Ціль переміщено в архів.'; return tabTo('goals'); }
+    /* cats */
+    else if (a === 'open-cat') return go('cat', { id: id });
+    else if (a === 'replay' || a === 'demo-unlock') return showUnlock(id);
+    else if (a === 'ov-close') { $('ov').innerHTML = ''; return; }
+    else if (a === 'ov-collection') { $('ov').innerHTML = ''; S.stack = [['goals', {}]]; S.route = 'cats'; S.p = {}; return render(); }
+    else if (a === 'toggle-calm') S.calm = !S.calm; else if (a === 'toggle-sound') S.sound = !S.sound;
+    else if (a === 'period') S.period = Number(id); else if (a === 'scen') S.scen[id] = !S.scen[id];
+    else return;
+    render(keep);
+  });
+  document.addEventListener('input', function (e) { if (e.target && e.target.getAttribute && e.target.getAttribute('data-calc') && S.calc) S.calc(); });
+  document.addEventListener('change', function (e) {
+    var el = e.target, id = el.id;
+    if (el.getAttribute && el.getAttribute('data-xsel')) { var X = S.x; if (id === 'x-from') { X.from = el.value; } else if (id === 'x-to') { X.to = el.value; } else if (id === 'x-fc') { X.fc = el.value; } else if (id === 'x-tc') { X.tc = el.value; } X.rateUser = null; render(true); }
+    else if (el.getAttribute && el.getAttribute('data-wsel')) { if (id === 'wd-acc') { S.wd.account = el.value; S.wd.cur = null; } else S.wd.cur = el.value; render(); }
+    else if (el.getAttribute && el.getAttribute('data-bsel')) { S.b.acc = el.value; render(); }
+    else if (id === 'g-d' && S.calc) S.calc();
+  });
+
+  /* ================= v2.1: нові вимоги користувачки ================= */
+  function curCtl() {
+    var opts = PRIMARY.map(function (k) { return '<button type="button" role="menuitemradio" aria-checked="' + (S.cur === k) + '" data-act="pick-cur" data-id="' + k + '"><span>' + NAMES[k] + '</span><span style="color:var(--muted)">' + SYM[k] + '</span></button>'; }).join('');
+    return '<span class="curctl"><button type="button" class="cur-btn" data-act="toggle-menu" aria-haspopup="true" aria-expanded="' + S.menu + '" aria-label="Валюта показу: ' + NAMES[S.cur] + '">' + SYM[S.cur] + ic('chev', 16) + '</button>' + (S.menu ? '<div class="menu" role="menu">' + opts + '</div>' : '') + '</span>';
+  }
+  function planText(g) { var a = fmtC(g.amt, g.cur); if (g.freq === 'month') return a + ' щомісяця, ' + g.day + ' числа'; if (g.freq === 'week') return a + ' щотижня, ' + WD[(g.day || 5) - 1]; if (g.freq === 'day') return a + ' щодня'; return a + ' у день зарплати'; }
+  function planShort(g) { return fmtC(g.amt, g.cur) + ' ' + FREQ[g.freq]; }
+  function recText(r) { return FREQ[r.freq] + (r.freq === 'month' ? ', ' + r.day + ' числа' : r.freq === 'week' ? ', ' + WD[(r.day || 5) - 1] : ''); }
+  function txGroup(t) { var root = t.link ? t.link : t.id; return TX.filter(function (x) { return x.id === root || x.link === root; }); }
+  function cancelTx(t, on) { var g = txGroup(t), owner = g.filter(function (x) { return x.eff; })[0]; if (!owner) return false; if (!!owner.void === on) return true; applyEff(owner.eff, on ? -1 : 1); g.forEach(function (x) { x.void = on; }); return true; }
+  function catHead(id) { return '<span class="mini">' + catSvg(id, '24 12 112 112') + '</span>'; }
+  function opt2(act, id, label, sub, on) { return '<button type="button" class="opt" data-act="' + act + '"' + (id ? ' data-id="' + id + '"' : '') + ' aria-pressed="' + on + '"><span>' + label + '<small>' + sub + '</small></span><span class="rad"></span></button>'; }
+  function opts(from, to, sel) { var o = ''; for (var i = from; i <= to; i++) o += '<option value="' + i + '"' + (i === sel ? ' selected' : '') + '>' + i + '</option>'; return o; }
+  function wdOpts(sel) { return WD.map(function (w, i) { return '<option value="' + (i + 1) + '"' + (i + 1 === sel ? ' selected' : '') + '>' + w + '</option>'; }).join(''); }
+
+  function goalCard(g, small) {
+    var c = GCOL[g.id] || GCOL.extra, p = pct(g), off = g.status !== 'active';
+    return '<button type="button" class="goal' + (off ? ' off' : '') + '" data-act="open-goal" data-id="' + g.id + '"><span class="g-top"><span class="g-ico" style="background:' + c[1] + ';color:' + c[0] + '">' + ic(g.icon, 26) + '</span><span class="g-name"><b>' + esc(g.name) + (g.status === 'paused' ? ' <span class="badge">на паузі</span>' : '') + '</b><small>' + fmtC(g.saved, g.cur) + ' з ' + fmtC(g.target, g.cur) + '</small></span><span class="g-pct" style="color:' + c[0] + '">' + p + '%</span></span>' +
+      '<span class="trk"><div class="bg"></div><div style="width:' + p + '%;background:' + c[0] + '"></div></span>' +
+      '<span class="g-bot"><span>' + (small ? planShort(g) : 'ще ' + fmtC(Math.max(0, g.target - g.saved), g.cur) + ' · ' + planShort(g)) + '</span><span class="when"><span style="color:' + c[0] + ';display:flex">' + ic('cal', 15) + '</span>' + etaOf(g) + '</span></span></button>';
+  }
+
+  function R_home() {
+    var T = total(), P = pool(), F = T - P, pl = byType(), bar = pl.map(function (p) { return '<span style="width:' + (p.u / T * 100) + '%;background:var(' + p.k + ')"></span>'; }).join('');
+    var cells = pl.map(function (p) { return '<div><div class="pl-n"><i style="background:var(' + p.k + ')"></i>' + p.n + '</div><div class="' + sz(conv(p.u), 'pl-a') + '">' + conv(p.u) + '</div></div>'; }).join('');
+    var tl = conv(T).length, pend = RECUR.filter(function (r) { return r.pending; })[0];
+    var line = pend ? '<button type="button" class="pendline" data-act="open-confirm" data-id="' + pend.id + '"><i></i>' + esc(pend.note) + ' ' + fmtC(pend.amt, pend.cur) + ' · Прийшло?</button>' : '<div class="delta">' + ic('up', 15) + '+' + conv(12400) + ' за місяць</div>';
+    return '<div><div class="hero-row"><span class="lbl">Загальний капітал</span>' + curCtl() + '</div><div class="total' + (tl > 13 ? ' xs' : tl > 10 ? ' sm' : '') + '">' + conv(T) + '</div>' + line + '</div>' +
+      '<div class="card"><div class="bar"><span style="width:' + (F / T * 100) + '%;background:var(--accent)"></span><span style="width:' + (P / T * 100) + '%;background:var(--g3)"></span></div><div class="two"><div><div class="pl-n"><i style="background:var(--accent)"></i>Вільні гроші</div><div class="' + sz(conv(F), 'big-a') + '">' + conv(F) + '</div></div><div><div class="pl-n"><i style="background:var(--g3)"></i>Відкладено на цілі</div><div class="' + sz(conv(P), 'big-a') + '">' + conv(P) + '</div></div></div></div>' +
+      '<div class="card"><div class="bar">' + bar + '</div><div class="two" style="gap:10px 12px">' + cells + '</div></div>' +
+      '<div class="sec"><h2>Мої цілі</h2><span>' + activeGoals().length + ' активні</span></div>' + activeGoals().slice(0, 2).map(function (g) { return goalCard(g, true); }).join('') + (activeGoals().length > 2 ? '<button type="button" class="second" style="min-height:46px" data-act="tab" data-id="goals">Усі цілі (' + activeGoals().length + ')</button>' : '');
+  }
+  function R_confirm_in() {
+    var r = RECUR.filter(function (x) { return x.id === S.p.id; })[0], a = accById(r.acc);
+    return '<div class="head"><button type="button" class="back" data-act="back" aria-label="Назад">' + ic('left') + '</button><h1>' + esc(r.note) + '</h1></div><div class="info">Очікували <b>' + fmtC(r.amt, r.cur) + '</b> на рахунок «' + esc(a.n) + '». Якщо прийшло інакше, змініть суму.</div>' +
+      '<div class="fld"><label for="c-amt">Скільки прийшло, ' + r.cur + '</label><input class="big-inp" id="c-amt" inputmode="decimal" value="' + r.amt + '"></div><p class="note">Гроші додаються на рахунок лише після вашого підтвердження.</p><button type="button" class="primary push" data-act="confirm-ok" data-id="' + r.id + '">Прийшло</button><button type="button" class="second" data-act="confirm-skip" data-id="' + r.id + '">Пропустити цей раз</button>';
+  }
+  function R_accounts() {
+    var act = activeAcc(), cs = {}; act.forEach(function (a) { a.bal.forEach(function (b) { cs[b.c] = 1; }); });
+    var arch = ACCOUNTS.filter(function (a) { return a.archived; });
+    return '<div class="hdr"><h1>Рахунки</h1>' + curCtl() + '</div><div class="card"><div class="pl-n">Усього на рахунках</div><div class="total sm" style="font-size:34px;margin-top:2px">' + conv(total()) + '</div><div class="sub">' + act.length + ' рахунків · ' + Object.keys(cs).length + ' валют</div></div>' +
+      act.map(accCard).join('') + '<button type="button" class="ghost" data-act="go" data-id="acc-new">Додати рахунок</button>' + (arch.length ? '<p class="note">В архіві: ' + arch.map(function (a) { return esc(a.n); }).join(', ') + '. Історія збережена.</p>' : '') +
+      '<p class="note">Валюта угорі змінює лише загальні суми. Баланси в кожній валюті лишаються як є, щоб було видно, що і в чому лежить.</p>';
+  }
+  function R_account() {
+    var a = accById(S.p.acc), f = S.p.f || 'all', cf = S.p.c || null;
+    var list = TX.filter(function (t) { return t.acc === a.id && (f === 'all' || t.type === f) && (!cf || t.cur === cf); });
+    var F = [['all', 'Усі'], ['in', 'Дохід'], ['out', 'Витрати'], ['xfer', 'Перекази'], ['add', 'Додано'], ['sub', 'Знято']];
+    return '<div class="head"><button type="button" class="back" data-act="back" aria-label="Назад">' + ic('left') + '</button><h1>' + esc(a.n) + '</h1><button type="button" class="iconbtn" data-act="go" data-id="acc-menu" aria-label="Дії з рахунком">' + ic('dots') + '</button></div>' +
+      '<div><div class="sub" style="margin:0">' + TYPES[a.type] + '</div><div class="total sm" style="font-size:36px">' + conv(accUah(a)) + '</div></div>' +
+      '<div class="bal" role="group" aria-label="Баланси за валютами">' + a.bal.map(function (b) { return '<button type="button" data-act="acc-cur" data-id="' + b.c + '" aria-pressed="' + (cf === b.c) + '"><small>' + b.c + '</small><b>' + fmtC(b.a, b.c) + '</b></button>'; }).join('') + '<button type="button" data-act="go" data-id="add-cur" style="min-width:90px;border-style:dashed"><small>Додати</small><b>+ валюту</b></button></div>' +
+      '<div class="qa" style="grid-template-columns:repeat(4,minmax(0,1fr))"><button type="button" data-act="money" data-id="in" aria-label="Додати дохід">' + ic('in') + 'Дохід</button><button type="button" data-act="money" data-id="out" aria-label="Додати витрату">' + ic('out') + 'Витрата</button><button type="button" data-act="xfer" aria-label="Переказ">' + ic('swap') + 'Переказ</button><button type="button" data-act="go" data-id="acc-fix" aria-label="Корекція балансу">' + ic('dots') + 'Ще</button></div>' +
+      '<div class="sec"><h2>Операції</h2><span>' + (cf ? cf + ' · ' : '') + list.length + '</span></div><div class="scroll-x" role="group" aria-label="Фільтр операцій">' + F.map(function (x) { return '<button type="button" class="pill" data-act="acc-filter" data-id="' + x[0] + '" aria-pressed="' + (f === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</div>' +
+      (list.length ? '<div class="list">' + list.map(txRow).join('') + '</div>' : '<p class="note">Тут поки немає операцій за цим фільтром.</p>') + '<p class="note">Скасовані операції лишаються в історії сірими, але на суми вже не впливають.</p>';
+  }
+  function R_acc_fix() {
+    return '<div class="head"><button type="button" class="back" data-act="back" aria-label="Назад">' + ic('left') + '</button><h1>Корекція балансу</h1></div><div class="info">Для випадків, коли гроші з’явились чи зникли не як звичайний дохід або витрата: знайшли готівку, помилилась сума, комісія банку. Потрібна коротка причина.</div>' +
+      '<button type="button" class="opt" data-act="money" data-id="add"><span>Додати гроші<small>баланс збільшиться, це не дохід</small></span>' + ic('addm', 22, 'var(--accent)') + '</button><button type="button" class="opt" data-act="money" data-id="sub"><span>Зняти гроші<small>баланс зменшиться, це не витрата</small></span>' + ic('subm', 22, 'var(--accent)') + '</button><p class="note">Обидві дії змінюють загальний капітал і лишаються в історії з причиною.</p>';
+  }
+  function R_money() {
+    var a = accById(S.p.acc), mode = S.p.mode, simple = (mode === 'in' || mode === 'out');
+    S.m = S.m && S.m.acc === a.id && S.m.mode === mode ? S.m : { acc: a.id, mode: mode, cur: a.bal[0].c, rep: 'no', auto: false };
+    var T = { in: 'Дохід', out: 'Витрата', add: 'Додати гроші', sub: 'Зняти гроші' }[mode], sign = (mode === 'in' || mode === 'add') ? '+' : '−';
+    var reasons = { add: ['Знайшла готівку', 'Невраховане надходження', 'Різниця при звірці'], sub: ['Зняття готівки', 'Комісія банку', 'Різниця при звірці'], in: ['Продаж речі', 'Зарплата', 'Подарунок'], out: ['Продукти', 'Транспорт', 'Підписки'] }[mode];
+    S.calc = function () {
+      var amt = fnum('f-amt'), sg = sign === '+' ? 1 : -1, cur = S.m.cur, before = balOf(a, cur), after = before + sg * amt, bad = after < -0.001;
+      $('hint').innerHTML = 'Баланс ' + esc(a.n) + ' ' + cur + ': ' + fmtC(before, cur) + ' → ' + fmtC(after, cur) + (simple ? '' : '. Це не дохід і не витрата, але змінює капітал.');
+      $('err').innerHTML = bad ? '<div class="warn" role="alert">На балансі ' + cur + ' немає стільки.</div>' : '';
+      $('ok').disabled = !(amt > 0) || bad || (!simple && !val('f-why').trim());
+    };
+    var rep = '';
+    if (simple) {
+      rep = '<div class="fld"><span class="lab">Повторювати</span><div class="chips">' + [['no', 'Ні'], ['day', 'Щодня'], ['week', 'Щотижня'], ['month', 'Щомісяця']].map(function (x) { return '<button type="button" class="pill" data-act="m-rep" data-id="' + x[0] + '" aria-pressed="' + (S.m.rep === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</div></div>';
+      if (S.m.rep === 'month') rep += '<div class="fld"><label for="m-day">Число місяця</label><select class="inp" id="m-day">' + opts(1, 28, 5) + '</select></div>';
+      if (S.m.rep === 'week') rep += '<div class="fld"><label for="m-day">День тижня</label><select class="inp" id="m-day">' + wdOpts(5) + '</select></div>';
+      if (S.m.rep !== 'no') rep += opt2('m-auto', '', 'Додавати автоматично', S.m.auto ? 'гроші додаватимуться самі в цей день' : 'у цей день я спитаю, чи прийшли гроші', S.m.auto) + '<p class="note">Цей раз додається зараз, наступні за розкладом.</p>';
+    }
+    return '<div class="head"><button type="button" class="back" data-act="back" aria-label="Назад">' + ic('left') + '</button><h1>' + T + '</h1></div>' +
+      '<div class="fld"><label for="f-amt">Сума ' + sign + '</label><input class="big-inp" id="f-amt" inputmode="decimal" placeholder="0" data-calc="1"></div>' +
+      '<div class="chips">' + a.bal.map(function (b) { return '<button type="button" class="pill" data-act="m-cur" data-id="' + b.c + '" aria-pressed="' + (S.m.cur === b.c) + '">' + b.c + '</button>'; }).join('') + '</div>' +
+      '<div class="fld"><label for="f-why">' + (simple ? 'За що (необов’язково)' : 'Причина (обов’язково)') + '</label><input class="inp" id="f-why" placeholder="Коротко" data-calc="1"><div class="chips" style="margin-top:6px">' + reasons.map(function (r) { return '<button type="button" class="pill" style="min-height:38px;font-size:14px" data-act="why" data-id="' + esc(r) + '">' + r + '</button>'; }).join('') + '</div></div>' + rep +
+      '<p class="note" id="hint"></p><div id="err"></div><button type="button" class="primary push" id="ok" data-act="money-ok" disabled>Зберегти</button>';
+  }
+  function R_tx() {
+    var t = TX.filter(function (x) { return x.id === Number(S.p.id); })[0]; if (!t) return '<p class="note">Операцію не знайдено.</p>';
+    var a = accById(t.acc), rows = [['Тип', TXL[t.type]], ['Сума', fmtS(t.amt, t.cur)], ['Рахунок', esc(a.n)], ['Дата', t.date], ['Опис', esc(t.note || '—')]];
+    if (t.rel) rows.push(['Пов’язаний рахунок', esc(t.rel)]); if (t.rate) rows.push(['Курс', num(t.rate, 4)]); if (t.fee) rows.push(['Комісія', fmtC(t.fee, t.cur)]); if (t.to) rows.push(['Отримано', t.to]);
+    var canCancel = !!txGroup(t).filter(function (x) { return x.eff; })[0] && t.type !== 'init';
+    return '<div class="head"><button type="button" class="back" data-act="back" aria-label="Назад">' + ic('left') + '</button><h1>Операція</h1></div>' +
+      (t.void ? '<div class="warn" role="status">Операцію скасовано. Суми повернуто, а запис лишився в історії сірим.' + '<br><button type="button" data-act="tx-restore" data-id="' + t.id + '">Відновити операцію</button></div>' : '') +
+      '<div class="pv">' + rows.map(function (r) { return '<div class="r2"><span>' + r[0] + '</span><b>' + r[1] + '</b></div>'; }).join('') + '</div>' +
+      (t.type === 'xfer' ? '<div class="info">Це одна операція, видна на обох рахунках. Скасування прибирає її з обох сторін разом. Не рахується доходом чи витратою.</div>' : '') +
+      (t.type !== 'xfer' && t.type !== 'init' && !t.void ? '<div class="fld"><label for="t-desc">Опис</label><input class="inp" id="t-desc" value="' + esc(t.note || '') + '"></div><button type="button" class="second" data-act="tx-desc-save" data-id="' + t.id + '">Зберегти опис</button>' : '') +
+      (canCancel && !t.void ? '<button type="button" class="second danger" data-act="tx-cancel" data-id="' + t.id + '">Скасувати операцію</button>' : '') +
+      '<p class="note">' + (t.type === 'init' ? 'Початковий баланс не скасовується. ' : '') + 'Суму не редагуємо: скасуйте операцію й додайте нову. Так історія лишається чесною, а баланси завжди сходяться.</p>';
+  }
+  function R_goals() {
+    var lg = liveGoals(), monthly = activeGoals().reduce(function (s, g) { return s + g.monthly * RATES[g.cur]; }, 0);
+    var shelf = S.cats.length ? '<button type="button" class="shelf" data-act="go" data-id="cats" aria-label="Колекція котиків"><span class="minis">' + S.cats.slice(-4).map(function (x) { return catHead(x.id); }).join('') + '</span><span style="flex:1;min-width:0"><b>Мої коти</b><small>' + S.cats.length + (S.cats.length === 1 ? ' друг оселився' : ' друзів оселилось') + '</small></span><svg class="spark" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/></svg>' + ic('right', 18, 'var(--muted)') + '</button>' : '';
+    return '<div class="hdr"><h1>Цілі</h1>' + curCtl() + '</div>' + shelf +
+      '<div class="card"><div class="two"><div><div class="pl-n"><i style="background:var(--g3)"></i>Відкладено</div><div class="' + sz(conv(pool()), 'big-a') + '">' + conv(pool()) + '</div></div><div><div class="pl-n"><i style="background:var(--accent)"></i>Вільні гроші</div><div class="' + sz(conv(free()), 'big-a') + '">' + conv(free()) + '</div></div><div><div class="pl-n">Активних цілей</div><div class="big-a">' + activeGoals().length + '</div></div><div><div class="pl-n">Планово на місяць</div><div class="' + sz(conv(monthly), 'big-a') + '">' + conv(monthly) + '</div></div></div></div>' +
+      lg.map(function (g) { return goalCard(g, false); }).join('') +
+      '<div class="two"><button type="button" class="second" data-act="go" data-id="contribute">Внести в цілі</button><button type="button" class="second" data-act="go" data-id="withdraw">Зняти з цілей</button></div><button type="button" class="ghost" data-act="goal-new">Нова ціль</button><p class="note">Валюта угорі змінює лише підсумки. Кожна ціль лишається у своїй валюті.</p>';
+  }
+  function R_goal() {
+    var g = goalById(S.p.id), c = GCOL[g.id] || GCOL.extra, p = pct(g), m = monthsOf(g), ins = insight(g);
+    return '<div class="head"><button type="button" class="back" data-act="back" aria-label="Назад">' + ic('left') + '</button><h1>' + esc(g.name) + '</h1>' + (g.status === 'paused' ? '<span class="badge">на паузі</span>' : '') + '</div>' +
+      '<div class="card"><div class="g-top"><span class="g-ico" style="background:' + c[1] + ';color:' + c[0] + '">' + ic(g.icon, 26) + '</span><span class="g-name"><b style="font-size:24px;font-weight:600">' + fmtC(g.saved, g.cur) + '</b><small>з ' + fmtC(g.target, g.cur) + '</small></span><span class="g-pct" style="color:' + c[0] + '">' + p + '%</span></div><span class="trk"><div class="bg"></div><div style="width:' + p + '%;background:' + c[0] + '"></div></span></div>' +
+      '<div class="pv"><div class="r2"><span>Залишилось</span><b>' + fmtC(Math.max(0, g.target - g.saved), g.cur) + '</b></div><div class="r2"><span>Відкладаю</span><b>' + planText(g) + '</b></div><div class="r2"><span>Орієнтовна дата</span><b>' + etaOf(g) + '</b></div><div class="r2"><span>Бажана дата</span><b>' + (g.desired ? g.desired.split('-').reverse().join('.') : 'не вказано') + '</b></div></div>' +
+      opt2('auto-toggle', g.id, 'Відкладати автоматично', g.auto ? 'у цей день гроші самі переходять з вільних у ціль' : 'вимкнено: вносите вручну', g.auto) +
+      (ins ? '<div class="info">' + ins + '</div>' : '') +
+      '<div class="two"><button type="button" class="second" data-act="go" data-id="contribute">Внесок</button><button type="button" class="second" data-act="go" data-id="withdraw">Зняти</button><button type="button" class="second" data-act="goal-edit" data-id="' + g.id + '">Редагувати</button><button type="button" class="second" data-act="pause" data-id="' + g.id + '">' + (g.status === 'paused' ? 'Відновити' : 'Пауза') + '</button></div>' +
+      '<button type="button" class="primary" data-act="buy" data-id="' + g.id + '">Купити / завершити</button><div class="sec"><h2>Історія</h2><span>' + g.hist.length + '</span></div><div class="list">' + hist(g) + '</div><p class="note">Автовідкладання лише переносить гроші всередині додатка: рахунки й капітал не змінюються. Якщо вільних грошей не вистачить, цей раз буде пропущено, і я напишу.</p>';
+  }
+  function R_goal_new() {
+    var ed = S.p.id ? goalById(S.p.id) : null;
+    var n = S.gn = S.gn || { cur: ed ? ed.cur : (['USD', 'EUR', 'UAH'].indexOf(S.def) >= 0 ? S.def : 'USD'), icon: ed ? ed.icon : 'laptop', freq: ed ? ed.freq : 'month', auto: ed ? ed.auto : true };
+    var ICONS = ['laptop', 'shoes', 'plane', 'car', 'home', 'shield'];
+    S.calc = function () {
+      var t = fnum('g-t'), m = fnum('g-m'), eq = m * (FEQ[n.freq] || 1), saved = ed ? ed.saved : 0, d = val('g-d'), out = '';
+      if (t > 0 && m > 0) { var mo = Math.max(0, Math.ceil((t - saved) / eq)); out = 'Орієнтовна дата покупки: <b>' + (mo === 0 ? 'вже можна' : dateAfter(mo)) + '</b> (' + mo + ' міс.).'; if (n.freq === 'week' || n.freq === 'day') out += '<br>Це приблизно ' + fmtC(Math.round(eq), n.cur) + ' на місяць.'; if (d) { var days = (new Date(d) - new Date(2026, 10, 11)) / 86400000, md = Math.max(1, Math.ceil(days / 30.44)), need = (t - saved) / md; out += need > eq ? '<br>Щоб встигнути до бажаної дати, потрібно ' + fmtC(Math.ceil(need), n.cur) + ' на місяць.' : '<br>До бажаної дати ви встигаєте.'; } }
+      else out = 'Вкажіть суму цілі й скільки відкладаєте, і я порахую дату.';
+      $('eta').innerHTML = out; $('ok').disabled = !(t > 0 && m > 0 && val('g-n').trim());
+    };
+    var when = n.freq === 'month' ? '<div class="fld"><label for="g-day">Число місяця</label><select class="inp" id="g-day">' + opts(1, 28, ed ? ed.day : 5) + '</select></div>' : n.freq === 'week' ? '<div class="fld"><label for="g-day">День тижня</label><select class="inp" id="g-day">' + wdOpts(ed ? ed.day : 5) + '</select></div>' : n.freq === 'salary' ? '<p class="note">Відкладатиму в день, коли ви підтвердите зарплату.</p>' : '';
+    return '<div class="head"><button type="button" class="back" data-act="back-gn" aria-label="Назад">' + ic('left') + '</button><h1>' + (ed ? 'Змінити ціль' : 'Нова ціль') + '</h1></div>' +
+      '<div class="fld"><label for="g-n">Назва</label><input class="inp" id="g-n" placeholder="Наприклад, iPhone 17 Pro" data-calc="1" value="' + (ed ? esc(ed.name) : '') + '"></div>' +
+      '<div class="grid2" style="grid-template-columns:1.3fr 1fr"><div class="fld"><label for="g-t">Скільки потрібно</label><input class="inp" id="g-t" inputmode="decimal" placeholder="0" data-calc="1" value="' + (ed ? ed.target : '') + '"></div><div class="fld"><span class="lab">Валюта цілі</span><div class="chips" style="gap:4px">' + ['USD', 'EUR', 'UAH'].map(function (c) { return '<button type="button" class="pill" style="padding:0 10px" data-act="g-cur" data-id="' + c + '" aria-pressed="' + (n.cur === c) + '">' + c + '</button>'; }).join('') + '</div></div></div>' +
+      '<div class="fld"><label for="g-m">Скільки відкладати кожного разу</label><input class="inp" id="g-m" inputmode="decimal" placeholder="0" data-calc="1" value="' + (ed ? ed.amt : '') + '"></div>' +
+      '<div class="fld"><span class="lab">Як часто</span><div class="chips">' + [['month', 'Щомісяця'], ['week', 'Щотижня'], ['day', 'Щодня'], ['salary', 'У день зарплати']].map(function (x) { return '<button type="button" class="pill" data-act="g-freq" data-id="' + x[0] + '" aria-pressed="' + (n.freq === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</div></div>' + when +
+      opt2('g-auto', '', 'Відкладати автоматично', n.auto ? 'у цей день гроші самі перейдуть з вільних у ціль' : 'вимкнено: вноситимете вручну', n.auto) + '<div class="info" id="eta"></div>' +
+      '<div class="fld"><span class="lab">Значок</span><div class="chips">' + ICONS.map(function (i) { return '<button type="button" class="iconbtn" style="border-width:2px;border-color:' + (n.icon === i ? 'var(--accent)' : 'var(--line)') + '" data-act="g-icon" data-id="' + i + '" aria-label="Значок" aria-pressed="' + (n.icon === i) + '">' + ic(i, 22) + '</button>'; }).join('') + '</div></div>' +
+      '<div class="fld"><label for="g-d">Бажана дата (необов’язково)</label><input class="inp" id="g-d" type="date" data-calc="1" value="' + (ed ? ed.desired : '') + '"></div><button type="button" class="primary push" id="ok" data-act="goal-save" disabled>' + (ed ? 'Зберегти' : 'Створити ціль') + '</button>';
+  }
+  function R_contribute() {
+    var ag = activeGoals();
+    S.calc = function () {
+      var sum = 0, per = {}; ag.forEach(function (g) { var v = fnum('c-' + g.id); per[g.id] = v; sum += v * RATES[g.cur]; });
+      var F = free(), bad = sum > F + 0.01;
+      $('pv').innerHTML = '<div class="r2"><span>Усього вносите</span><b>' + conv(sum) + '</b></div><div class="r2"><span>Вільні гроші</span><b>' + conv(F) + '<span class="arrow">→</span>' + conv(F - sum) + '</b></div><div class="r2"><span>Відкладено</span><b>' + conv(pool()) + '<span class="arrow">→</span>' + conv(pool() + sum) + '</b></div><div class="r2"><span>Загальний капітал</span><b>без змін</b></div>';
+      $('err').innerHTML = bad ? '<div class="warn" role="alert">Вільних грошей не вистачає на ' + conv(sum - F) + '. Зменште внески.</div>' : '';
+      $('ok').disabled = !(sum > 0) || bad; S.cv = per;
+    };
+    return '<div class="head"><button type="button" class="back" data-act="back" aria-label="Назад">' + ic('left') + '</button><h1>Внести в цілі</h1></div><div class="info">Вільні гроші: <b>' + conv(free()) + '</b>. Це разовий внесок додатково до автовідкладання. Рахунки й капітал не змінюються.</div>' +
+      ag.map(function (g) { var c = GCOL[g.id] || GCOL.extra; return '<div class="card"><div class="g-top"><span class="g-ico" style="background:' + c[1] + ';color:' + c[0] + ';width:36px;height:36px">' + ic(g.icon, 22) + '</span><span class="g-name"><b>' + esc(g.name) + '</b><small>за планом ' + planShort(g) + ' · зараз ' + fmtC(g.saved, g.cur) + '</small></span></div><div class="fld" style="margin-top:10px"><label for="c-' + g.id + '">Скільки вносите, ' + g.cur + '</label><input class="inp" id="c-' + g.id + '" inputmode="decimal" data-calc="1" value="' + g.amt + '"></div></div>'; }).join('') +
+      '<div class="pv" id="pv"></div><div id="err"></div><button type="button" class="primary push" id="ok" data-act="contrib-ok" disabled>Підтвердити внески</button>';
+  }
+  function R_plan() {
+    var EXP = [['Оренда', 250, 'фікс.'], ['Комунальні', 60, 'фікс.'], ['Продукти', 150, 'змінні'], ['Тварини', 40, 'змінні'], ['Транспорт', 30, 'змінні'], ['Підписки', 20, 'фікс.'], ['Страхування', 20, 'фікс.'], ['Здоров’я', 30, 'змінні']];
+    return '<div class="head"><button type="button" class="back" data-act="back" aria-label="Назад">' + ic('left') + '</button><h1>Дохід і витрати</h1></div><div class="sec"><h2>Регулярні надходження</h2></div>' +
+      '<div class="list">' + RECUR.filter(function (r) { return r.amt > 0; }).map(function (r) { return '<div class="row"><span class="l"><span>' + esc(r.note) + '<small>' + recText(r) + ' · ' + esc(accById(r.acc).n) + '</small></span></span><span class="r">' + fmtC(r.amt, r.cur) + '<small><span class="badge' + (r.pending ? ' ok' : '') + '">' + (r.pending ? 'чекає підтвердження' : r.auto ? 'автоматично' : 'спитаю') + '</span></small></span></div>'; }).join('') + '</div>' +
+      '<button type="button" class="ghost" data-act="add-recur">Додати регулярний дохід</button><p class="note">Плановий дохід впливає на прогноз. На баланс він потрапляє, коли ви підтвердите «Прийшло» (або якщо ввімкнено автоматично).</p>' +
+      '<div class="sec"><h2>Планові витрати</h2><span>' + fmtC(EXPENSES, 'USD') + ' на місяць</span></div><div class="list">' + EXP.map(function (e) { return '<div class="row" style="min-height:48px"><span class="l" style="font-weight:400">' + e[0] + ' <span class="badge">' + e[2] + '</span></span><span class="r">' + fmtC(e[1], 'USD') + '</span></div>'; }).join('') + '</div><p class="note">Планові витрати не списуються з рахунків. Щодня вести витрати не потрібно.</p><button type="button" class="ghost">Закрити місяць (факт)</button>';
+  }
+  function R_more() {
+    var L = [['a', 'А · Синій', ['#1F4DB8', '#4C74D2', '#7FA0E3']], ['b', 'Б · Ніч', ['#7FB2FF', '#5E8FD6', '#335185']], ['c', 'В · Графіт', ['#2B2B2B', '#8A8885', '#1F6F5E']]];
+    return '<h1>Ще</h1><div class="sec"><h2>Основна валюта</h2></div><div class="chips">' + PRIMARY.map(function (c) { return '<button type="button" class="pill" data-act="set-def" data-id="' + c + '" aria-pressed="' + (S.def === c) + '">' + NAMES[c] + ' ' + SYM[c] + '</button>'; }).join('') + '</div><p class="note">Вона підставляється за замовчуванням, коли ви створюєте цілі, і є початковою для всіх підсумків.</p>' +
+      '<div class="list"><button type="button" class="row" data-act="go" data-id="plan"><span class="l">Дохід і витрати</span>' + ic('right', 18, 'var(--muted)') + '</button><button type="button" class="row"><span class="l">Закрити місяць</span>' + ic('right', 18, 'var(--muted)') + '</button><button type="button" class="row"><span class="l">Курси валют</span>' + ic('right', 18, 'var(--muted)') + '</button></div>' +
+      '<div class="sec"><h2>Для дизайну</h2></div><div class="list"><button type="button" class="row" data-act="go" data-id="catsheet"><span class="l">Концепт колекції котів</span>' + ic('right', 18, 'var(--muted)') + '</button><button type="button" class="row" data-act="demo-unlock" data-id="trav"><span class="l">Показати появу кота</span>' + ic('right', 18, 'var(--muted)') + '</button></div>' +
+      '<div class="sec"><h2>Анімації</h2></div>' + opt2('toggle-calm', '', 'Без руху', 'покаже появу кота без анімацій', S.calm) + opt2('toggle-sound', '', 'Звук', 'за замовчуванням вимкнено', S.sound) +
+      '<div class="sec"><h2>Вигляд</h2></div><div class="looks">' + L.map(function (l) { return '<button type="button" class="look" data-act="look" data-id="' + l[0] + '" aria-pressed="' + (S.look === l[0]) + '"><span>' + l[1] + '</span><span class="sws">' + l[2].map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</span></button>'; }).join('') + '</div><p class="note">Прототип: цифри вигадані, нічого не зберігається. Це не ваш справжній додаток.</p>';
+  }
+  R['acc-fix'] = R_acc_fix; R['confirm-in'] = R_confirm_in; PARENT['acc-fix'] = 'accounts'; PARENT['confirm-in'] = 'home';
+  R.home = R_home; R.accounts = R_accounts; R.account = R_account; R.money = R_money; R.tx = R_tx; R.goals = R_goals; R.goal = R_goal; R['goal-new'] = R_goal_new; R.contribute = R_contribute; R.plan = R_plan; R.more = R_more;
+  S.cur = S.def;
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-act]'); if (!t) return;
+    var a = t.getAttribute('data-act'), id = t.getAttribute('data-id'), keep = false;
+    if (a === 'open-confirm') return go('confirm-in', { id: id });
+    else if (a === 'confirm-ok') { var r = RECUR.filter(function (x) { return x.id === id; })[0], amt = fnum('c-amt'); if (!(amt > 0)) return; addTx({ acc: r.acc, type: 'in', amt: amt, cur: r.cur, date: DATE0, note: r.note, eff: [[r.acc, r.cur, amt]] }); r.pending = false; S.toast = 'Зараховано ' + fmtC(amt, r.cur) + ' на ' + accById(r.acc).n + '.'; return tabTo('home'); }
+    else if (a === 'confirm-skip') { RECUR.filter(function (x) { return x.id === id; })[0].pending = false; S.toast = 'Пропущено. Наступне надходження за розкладом.'; return tabTo('home'); }
+    else if (a === 'tx-cancel') { var tx = TX.filter(function (x) { return x.id === Number(id); })[0]; if (cancelTx(tx, true)) S.toast = 'Операцію скасовано. Суми повернуто, запис лишився сірим.'; }
+    else if (a === 'tx-restore') { var tx2 = TX.filter(function (x) { return x.id === Number(id); })[0]; if (cancelTx(tx2, false)) S.toast = 'Операцію відновлено.'; }
+    else if (a === 'tx-desc-save') { var tx3 = TX.filter(function (x) { return x.id === Number(id); })[0]; tx3.note = val('t-desc').trim(); S.toast = 'Опис збережено.'; }
+    else if (a === 'm-rep') { S.m.rep = id; keep = true; }
+    else if (a === 'm-auto') { S.m.auto = !S.m.auto; keep = true; }
+    else if (a === 'g-freq') { S.gn.freq = id; keep = true; }
+    else if (a === 'g-auto') { S.gn.auto = !S.gn.auto; keep = true; }
+    else if (a === 'auto-toggle') { var g = goalById(id); g.auto = !g.auto; }
+    else if (a === 'set-def') { S.def = id; S.cur = id; }
+    else if (a === 'add-recur') { S.m = null; go('money', { acc: 'mono', mode: 'in' }); S.m = { acc: 'mono', mode: 'in', cur: accById('mono').bal[0].c, rep: 'month', auto: false }; render(); return; }
+    else return;
+    render(keep);
+  });
+  render();
+})();
+</script>
+</body>
+</html>
