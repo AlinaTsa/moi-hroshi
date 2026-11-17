@@ -232,4 +232,24 @@
   .comment-count{align-self:flex-end;margin-top:-8px;color:var(--muted);font-variant-numeric:tabular-nums}
   .history-list .row .l{min-width:0;flex:1}
   .history-list .row .r{flex:none;max-width:none;white-space:nowrap;overflow-wrap:normal}
-</style></head><body data-look="a"><div class="app"><main id="view"></main><nav class="tabs" id="tabs" aria-label="Розділи"></nav><div id="ov"></div></div><script src="prototype-v3-core.js?v=20261117-account-history"></script><script src="prototype-v3-art.js?v=20261117-account-history"></script><script src="prototype-v3-ui.js?v=20261117-income-form"></script></body></html>
+  .movement-comment{font:inherit;line-height:1.5;resize:vertical;min-height:90px;padding:12px 14px;background:var(--soft);color:var(--ink)}
+  .movement-comment:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .field-hint{margin:-8px 0 0;color:var(--bad);font-size:13px}
+  .field-hint:empty,#quick-preview:empty{display:none}
+  .inp[aria-invalid="true"]{border-color:var(--bad)}
+  .fld>.comment-count{margin:0}
+  .curctl .menu{max-height:45dvh;overflow:auto}
+  .curctl .menu button{height:auto;min-height:44px;gap:8px;text-align:left}
+  .currency-caption{color:var(--muted);font-size:14px}
+  .movement-picker>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;list-style:none;min-height:48px}
+  .movement-picker>summary::-webkit-details-marker{display:none}
+  .currency-options{display:grid;max-height:230px;overflow-y:auto;margin-top:6px;padding:4px;background:var(--card);border:1px solid var(--line);border-radius:14px}
+  .currency-item{min-height:44px;text-align:left;padding:8px 12px;border:0;border-radius:10px;background:transparent}
+  .currency-item[aria-pressed="true"]{background:var(--sel);color:var(--accent)}
+  .transfer-block{display:flex;flex-direction:column;gap:12px}
+  .transfer-source{font-size:20px;overflow-wrap:anywhere}
+  #transfer-rate:empty{display:none}
+  .initial-balances,.initial-balance{display:grid;gap:12px}
+  .initial-balance .remove-balance{justify-self:end;min-height:44px;padding:6px 12px;color:var(--muted)}
+  .initial-balance .remove-balance[hidden]{display:none}
+</style></head><body data-look="a"><div class="app"><main id="view"></main><nav class="tabs" id="tabs" aria-label="Розділи"></nav><div id="ov"></div></div><script src="prototype-v3-core.js?v=20261117-balance-edit"></script><script src="prototype-v3-art.js?v=20261117-balance-edit"></script><script src="prototype-v3-ui.js?v=20261117-multi-balance"></script></body></html>

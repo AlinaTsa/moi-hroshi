@@ -14,7 +14,7 @@
   function seed(noGoals, now) {
     const date = now || '2026-11-13';
     return { schemaVersion: 1, date, currency: 'USD', look: 'a', calm: false,
-      rates: { UAH: 1, USD: 42, EUR: 48.5, GBP: 56 },
+      rates: { UAH: 1, USD: 42, EUR: 48.5, GBP: 56, PLN: 11.5, CHF: 52, CZK: 1.95, SEK: 4.4, NOK: 4.1, DKK: 6.5, JPY: 0.28, CAD: 30, AUD: 27, USDT: 42 },
       base: {
         accounts: [
           { id: 'wise', name: 'Wise', type: 'bank', color: 1, balances: { USD: 1200000, EUR: 80000 }, checked: date },
@@ -84,7 +84,7 @@
     const totals = new Map();
     for (const e of activeEvents.filter(e => e.type === 'month-total')) totals.set(e.account + '|' + e.currency + '|' + e.month, e);
     const detailTotals = {};
-    activeEvents.filter(e => e.type === 'expense' || e.type === 'purchase' || (e.type === 'balance' && e.asExpense && e.expenseAmount > 0)).forEach(e => {
+    activeEvents.filter(e => (e.type === 'expense' && !e.standalone) || e.type === 'purchase' || (e.type === 'balance' && e.asExpense && e.expenseAmount > 0)).forEach(e => {
       const k = e.account + '|' + e.currency + '|' + e.date.slice(0, 7);
       detailTotals[k] = (detailTotals[k] || 0) + (e.type === 'balance' ? e.expenseAmount : e.amount);
     });
@@ -179,7 +179,7 @@
   }
   function append(store, payload) {
     const next = clone(store), date = payload.date || store.date;
-    if (payload.type === 'balance') { const p = project(store), a = account(p,payload.account); if (payload.currency in a.balances && a.balances[payload.currency] === payload.amount) return next; }
+    if (payload.type === 'balance' && !payload.explicitEdit) { const p = project(store), a = account(p,payload.account); if (payload.currency in a.balances && a.balances[payload.currency] === payload.amount) return next; }
     if (payload.type === 'month-total') {
       const prior = next.events.filter(e => !e.void && e.type === 'month-total' && e.account === payload.account && e.currency === payload.currency && e.month === payload.month).at(-1);
       if (prior) {
