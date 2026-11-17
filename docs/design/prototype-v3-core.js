@@ -31,17 +31,17 @@
       }, events: [], sequence: 0 };
   }
   function value(balances, rates) { return Object.entries(balances).reduce((sum, [c, n]) => sum + n * rates[c], 0); }
-  function total(p, rates) { return p.accounts.reduce((s, a) => s + value(a.balances, rates), 0); }
+  function total(p, rates) { return p.accounts.reduce((s, a) => s + (a.deleted ? 0 : value(a.balances, rates)), 0); }
   function pool(p, rates) { return p.goals.filter(live).reduce((s, g) => s + value(g.holdings, rates), 0); }
   function free(p, rates) { return total(p, rates) - pool(p, rates); }
   function saved(g, rates) { return value(g.holdings, rates) / rates[g.currency]; }
   function eta(g, rates) { const left = Math.max(0, g.target - saved(g, rates)); return left < .5 ? 0 : g.monthly > 0 && g.status !== 'paused' ? Math.ceil(left / g.monthly) : null; }
   function checkAmount(n, zero) { if (!Number.isSafeInteger(n) || n < (zero ? 0 : 1)) throw new Error('Введіть коректну суму, не більше двох знаків після коми.'); }
-  function account(p, id) { const a = p.accounts.find(x => x.id === id); if (!a) throw new Error('Рахунок не знайдено.'); return a; }
+  function account(p, id) { const a = p.accounts.find(x => x.id === id); if (!a) throw new Error('Рахунок не знайдено.'); if (a.deleted) throw new Error('Рахунок уже видалено. Нові операції недоступні.'); return a; }
   function goal(p, id) { const g = p.goals.find(x => x.id === id); if (!g) throw new Error('Ціль не знайдено.'); return g; }
   function change(a, c, delta) { const next = (a.balances[c] || 0) + delta; if (next < 0) throw new Error('На цьому рахунку недостатньо грошей. Перевірте суму або наступні операції.'); a.balances[c] = next; }
   function reserveFree(p, c) {
-    return Math.max(0, p.accounts.reduce((s, a) => s + (a.balances[c] || 0), 0) - p.goals.filter(live).reduce((s, g) => s + (g.holdings[c] || 0), 0));
+    return Math.max(0, p.accounts.reduce((s, a) => s + (a.deleted ? 0 : (a.balances[c] || 0)), 0) - p.goals.filter(live).reduce((s, g) => s + (g.holdings[c] || 0), 0));
   }
   function contribute(p, rates, g, c, amount, cap) {
     checkAmount(amount, true);
@@ -133,12 +133,29 @@
         if (e.amount * rates[e.currency] > available + .001) throw new Error('Для покупки не вистачає накопичень цієї цілі та вільних грошей.');
         change(a, e.currency, -e.amount); g.holdings = {}; g.status = 'done'; r.delta = -e.amount;
         if (!p.cats.includes('first')) p.cats.push('first');
+      } else if (e.type === 'account-remove') {
+        const a = account(p, e.account);
+        if (e.mode !== 'transfer' && e.mode !== 'remove') throw new Error('Оберіть спосіб видалення рахунку.');
+        r.removedAmounts = clone(a.balances); r.removedName = a.name;
+        if (e.mode === 'transfer') {
+          if (e.to === e.account) throw new Error('Оберіть інший рахунок для переказу.');
+          const destination = account(p, e.to);
+          if (destination.archived) throw new Error('Рахунок отримання має бути активним.');
+          Object.entries(a.balances).forEach(([currency, amount]) => change(destination, currency, amount));
+          r.destinationName = destination.name;
+        } else r.removedValue = value(a.balances, rates);
+        Object.keys(a.balances).forEach(c => { a.balances[c] = 0; });
+        a.deleted = true; a.archived = true; a.deletedAt = e.date;
+        if (p.salary && p.salary.account === a.id) {
+          p.salary = e.mode === 'transfer' ? { ...p.salary, account: e.to } : { ...p.salary, auto: false };
+          r.salaryRedirected = e.mode === 'transfer'; r.salaryDisabled = e.mode === 'remove';
+        }
       } else if (e.type === 'account-create') { p.accounts.push(clone(e.accountData)); }
       else if (e.type === 'account-settings') {
         const a = account(p, e.account);
         if (e.changes.archived && value(a.balances, rates) !== 0) throw new Error('Архівувати можна рахунок із нульовими залишками. Спершу переказуйте гроші.');
         Object.assign(a, e.changes);
-      } else if (e.type === 'salary-settings') { p.salary = clone(e.salary); }
+      } else if (e.type === 'salary-settings') { account(p, e.salary.account); p.salary = clone(e.salary); }
       else if (e.type === 'month') {
         if (doneMonths.has(e.month)) { r.superseded = true; p.history.push(r); continue; }
         doneMonths.add(e.month);
