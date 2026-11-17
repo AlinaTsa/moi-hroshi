@@ -11,12 +11,16 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
   let quick = { mode: 'expense', detail: false }, lastTab = 'home';
   let openSwipeId = null, swipe = null, suppressSwipeClickUntil = 0, deleteAccountId = null;
   const symbols = {USD:'$',EUR:'€',UAH:'₴',GBP:'£'};
-  const names = {cash:'Готівка',bank:'Банківський рахунок',dep:'Депозит',biz:'Бізнес',other:'Інше'};
-  const types = ['cash','bank','dep','biz','other'];
+  const names = {cash:'Готівка',bank:'Банківський рахунок',dep:'Депозит',biz:'Бізнес',crypto:'Криптовалюта',other:'Інше'};
+  const types = ['cash','bank','dep','biz','crypto','other'];
   const currencies = Object.keys(store.rates);
   const money = (n,c) => (n/100).toLocaleString('uk-UA',{maximumFractionDigits:2}) + ' ' + (symbols[c] || c);
   const shown = n => money(Math.round(n/store.rates[store.currency]),store.currency);
-  const val = id => $(id) ? $(id).value : '';
+  const val = id => {
+    const field = $(id);
+    if (id === 'i-currency') return field?.querySelector(':checked')?.value || '';
+    return field?.value || '';
+  };
   const amount = value => { const text=String(value).trim().replace(/\s/g,'').replace(',','.'); if (!/^\d+(\.\d{0,2})?$/.test(text)) throw new Error('Введіть суму цифрами, наприклад 1500 або 1500,50.'); const n=Math.round(Number(text)*100); if (!Number.isSafeInteger(n) || n > 1e13) throw new Error('Сума завелика для прототипу.'); return n; };
   const dateLabel = d => new Date(d+'T12:00:00').toLocaleDateString('uk-UA',{day:'numeric',month:'short',year:'numeric'});
   const monthLabel = d => new Date(d.slice(0,7)+'-01T12:00:00').toLocaleDateString('uk-UA',{month:'long',year:'numeric'});
@@ -31,7 +35,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
   const form = (action,html,submit='Зберегти') => '<form class="form" data-form="'+action+'">'+html+'<div class="error" id="form-error" role="alert"></div><button class="primary" type="submit">'+submit+'</button></form>';
   function persist(next) { E.project(next); store=next; try { localStorage.setItem(KEY,JSON.stringify(store)); storageWarning=''; } catch (_) { storageWarning='Не вдалося зберегти демо. Зміни доступні лише до закриття вкладки.'; } }
   function commit(event,msg) { persist(E.append(store,event)); toast=msg||'Збережено'; }
-  function go(next, data={}) { route=next; params=data; toast=''; if (['home','accounts','goals','forecast','more'].includes(next)) lastTab=next; render(); $('view').scrollTop=0; }
+  function go(next, data={}) { route=next; params=data; toast=''; overlay=null; if (['home','accounts','goals','forecast','more'].includes(next)) lastTab=next; render(); $('view').scrollTop=0; }
   function header(title, back) { return '<div class="head">'+(back?button(ic('left'),'go',back,'back','aria-label="Назад"'):'')+'<h1 tabindex="-1">'+title+'</h1></div>'; }
   function curCtl() { return '<details class="curctl"><summary class="cur-btn" aria-label="Валюта підсумку">'+symbols[store.currency]+ic('chev',16)+'</summary><div class="menu" role="menu">'+currencies.map(c=>'<button type="button" role="menuitemradio" aria-checked="'+(store.currency===c)+'" data-action="set-currency" data-id="'+c+'"><span>'+({UAH:'Гривня',USD:'Долар',EUR:'Євро',GBP:'Фунт'}[c])+'</span><span style="color:var(--muted)">'+symbols[c]+'</span></button>').join('')+'</div></details>'; }
   function sizeClass(text,base) { return base+(String(text).length>11?' sm':''); }
@@ -70,6 +74,15 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
   function historyRows(list,forGoal) { return list.length?'<div class="list history-list">'+list.slice().reverse().map(e=>{
     let title=esc(e.note||eventNames[e.type])+(e.void?' · скасовано':''), sub=dateLabel(e.date)+(e.month?' · '+monthLabel(e.month):''), right=e.currency&&e.amount!==undefined?money(e.type==='balance'?e.amount:(e.type==='income'?e.amount:-e.amount),e.currency):ic('right',18);
     if(e.type==='account-remove'){title=e.mode==='transfer'?'Переказ і видалення рахунку':'Рахунок видалено з обліку';sub+=' · '+esc(e.removedName||aBy(e.account)?.name||'');right=Object.entries(e.removedAmounts||{}).filter(([,n])=>n>0).map(([c,n])=>money(n,c)).join(' · ')||'0';}
+    if(e.type==='balance'&&!e.void&&!e.asExpense){
+      title='Залишок відредаговано';
+      sub+=' · '+money(e.amount-e.delta,e.currency)+' → '+money(e.amount,e.currency);
+    }
+    if(e.previousName!==undefined){
+      title='Назву змінено';
+      sub+=' · '+esc(e.previousName)+' → '+esc(e.changes.name);
+    }
+    if(e.revisions?.length) sub+=' · виправлено ('+e.revisions.length+')';
     if(e.type==='balance'&&e.estimatedExpense){title='Витрати за залишком';right='−'+money(e.estimatedExpense,e.currency);sub+=' · залишилось '+money(e.amount,e.currency);}
     if(forGoal){const share=e.cover?.find(r=>r.goal===forGoal);if(share){right=Object.entries(share.amounts).map(([c,n])=>'−'+money(n,c)).join(' + ');sub+=' · частина загальних витрат';}const c=e.contributions?.find(r=>r.goal===forGoal);if(c)right='+'+money(c.amount,c.currency);}
     return row(title,sub,right,'event',e.id);
@@ -78,7 +91,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
     const a=aBy(params.id); if(!a) return accounts(); if(a.deleted) return header(esc(a.name),'accounts')+'<div class="info">Рахунок видалено з обліку. Його історія збережена.</div>'+historyRows(p.history.filter(e=>e.account===a.id||e.to===a.id)); const selected=params.currency||Object.keys(a.balances)[0], filter=params.filter||'all';
     const all=p.history.filter(e=>e.account===a.id||e.to===a.id||(e.type==='month'&&e.salary&&e.salary.account===a.id));
     const list=all.filter(e=>filter==='all'||(filter==='income'&&(e.type==='income'||e.salary))||(filter==='expense'&&['expense','month-total','balance','purchase'].includes(e.type))||(filter==='transfer'&&e.type==='transfer'));
-    return '<div class="head">'+button(ic('left'),'go','accounts','back','aria-label="Назад"')+'<h1>'+esc(a.name)+'</h1>'+button(ic('dots'),'account-menu',a.id,'iconbtn','aria-label="Дії з рахунком"')+'</div><div><div class="sub" style="margin:0">'+names[a.type]+'</div><div class="total sm" style="font-size:36px">'+shown(E.value(a.balances,store.rates))+'</div></div><div class="bal" role="group" aria-label="Баланси за валютами">'+Object.entries(a.balances).map(([c,n])=>'<button type="button" data-action="account-currency" data-id="'+c+'" aria-pressed="'+(selected===c)+'"><small>'+c+'</small><b>'+money(n,c)+'</b></button>').join('')+'</div><div class="qa" style="grid-template-columns:repeat(4,minmax(0,1fr))">'+button(ic('in')+'Дохід','income',a.id,'','data-currency="'+selected+'"')+button(ic('out')+'Витрати','quick',a.id,'','data-currency="'+selected+'"')+button(ic('swap')+'Переказ','transfer',a.id,'','data-currency="'+selected+'"')+button(ic('addm')+'Редагувати','edit-balance',a.id,'','data-currency="'+selected+'"')+'</div><div class="sec"><h2>Операції</h2><span>'+list.length+'</span></div><div class="scroll-x" role="group" aria-label="Фільтр операцій">'+[['all','Усі'],['income','Дохід'],['expense','Витрати'],['transfer','Перекази']].map(([id,n])=>button(n,'account-filter',id,'pill','aria-pressed="'+(filter===id)+'"')).join('')+'</div>'+historyRows(list)+'<p class="note">'+(a.checked?'Залишок звірено '+dateLabel(a.checked)+'. ':'')+'Скасовані операції зберігаються в історії, але на суми не впливають.</p>';
+    return '<div class="head">'+button(ic('left'),'go','accounts','back','aria-label="Назад"')+'<h1>'+esc(a.name)+'</h1>'+button(ic('dots'),'account-menu',a.id,'iconbtn','aria-label="Дії з рахунком"')+'</div><div><div class="sub" style="margin:0">'+names[a.type]+'</div><div class="total sm" style="font-size:36px">'+shown(E.value(a.balances,store.rates))+'</div></div><div class="bal" role="group" aria-label="Баланси за валютами">'+Object.entries(a.balances).map(([c,n])=>'<button type="button" data-action="account-currency" data-id="'+c+'" aria-pressed="'+(selected===c)+'"><small>'+c+'</small><b>'+money(n,c)+'</b></button>').join('')+'</div><div class="qa" style="grid-template-columns:repeat(4,minmax(0,1fr))">'+button(ic('plus')+'Додати','income',a.id,'','data-currency="'+selected+'"')+button(ic('subm')+'Зняти','quick',a.id,'','data-currency="'+selected+'"')+button(ic('swap')+'Переказати','transfer',a.id,'','data-currency="'+selected+'"')+button(ic('pencil')+'Редагувати','edit-balance',a.id,'','data-currency="'+selected+'"')+'</div><div class="sec"><h2>Операції</h2><span>'+list.length+'</span></div><div class="scroll-x" role="group" aria-label="Фільтр операцій">'+[['all','Усі'],['income','Дохід'],['expense','Витрати'],['transfer','Перекази']].map(([id,n])=>button(n,'account-filter',id,'pill','aria-pressed="'+(filter===id)+'"')).join('')+'</div>'+historyRows(list)+'<p class="note">'+(a.checked?'Залишок звірено '+dateLabel(a.checked)+'. ':'')+'Скасовані операції зберігаються в історії, але на суми не впливають.</p>';
   }
   function accountMenu() { const a=aBy(params.id);return header(esc(a.name),'account')+'<div class="list">'+row('Перейменувати','',ic('right',18),'rename-account',a.id)+row('<span class="danger">Видалити рахунок</span>','Переказати гроші або прибрати суму з обліку',ic('right',18),'delete-account-dialog',a.id)+'</div>'; }
   function quickScreen() {
@@ -88,7 +101,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
     const details=p.history.filter(e=>!e.void&&(e.type==='expense'||e.type==='purchase'||(e.type==='balance'&&e.estimatedExpense))&&e.account===a.id&&e.currency===c&&e.date.slice(0,7)===store.date.slice(0,7)).reduce((s,e)=>s+(e.type==='balance'?e.estimatedExpense:e.amount),0);
     return header('Оновити гроші','account')+'<p class="note">'+esc(a.name)+' · '+c+' · '+monthLabel(store.date)+'</p><div class="seg">'+button('Витратила','quick-mode','expense','', 'aria-pressed="'+(mode==='expense')+'"')+button('Залишилось','quick-mode','balance','', 'aria-pressed="'+(mode==='balance')+'"')+'</div>'+form('quick',
       '<div class="fld"><label for="q-amount">'+(mode==='balance'?'Зараз на рахунку, '+c:quick.detail?'Сума цієї покупки, '+c:'Усього витратила цього місяця, '+c)+'</label><input class="big-inp" id="q-amount" name="q-amount" inputmode="decimal" autocomplete="off" placeholder="0" value="'+(mode==='balance'?current/100:!quick.detail&&prior?prior.amount/100:'')+'" required></div>'+
-      (mode==='expense'?toggle('q-detail','Записати окрему покупку',quick.detail,'Вимкнено — загальна сума за місяць')+(quick.detail?field('q-note','За що (необов’язково)','','text','maxlength="100"'):'<p class="note">Окремо вже записано '+money(details,c)+'. Вони входять у підсумок, а не додаються зверху.</p>'):toggle('q-expense','Різницю записати у витрати',true,'Вимкніть, якщо це дохід, переказ або виправлення') )+
+      (mode==='expense'?toggle('q-detail','Записати окрему покупку',quick.detail,'Вимкнено — загальна сума за місяць')+(quick.detail?commentField('q-note'):'<p class="note">Окремо вже записано '+money(details,c)+'. Вони входять у підсумок, а не додаються зверху.</p>'):toggle('q-expense','Різницю записати у витрати',true,'Вимкніть, якщо це дохід, переказ або виправлення') )+
       '<div class="pv" id="quick-preview"><div class="r2"><span>Зараз записано</span><b>'+money(current,c)+'</b></div></div>','Зберегти')+'<p class="note">Переказ між власними рахунками краще записати дією «Переказ», щоб не вважати його витратою.</p>';
   }
   function quickPayload() {
@@ -111,7 +124,21 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
     return header('Редагувати залишок','account')+'<p class="note">'+esc(account.name)+'</p>'+
       form('edit-balance',field('edit-amount','Залишок, '+currency,account.balances[currency]/100,'text','inputmode="decimal" required'));
   }
-  function incomeScreen() { const a=aBy(params.id);return header('Додати гроші','account')+'<p class="note">'+esc(a.name)+'</p>'+form('income',select('i-currency','Валюта',options(currencies,params.currency||Object.keys(a.balances)[0]))+field('i-amount','Сума','','text','inputmode="decimal" required')+field('i-note','За що (необов’язково)','','text','maxlength="100"')); }
+  function commentField(id,value='') {
+    return field(id,'Коментар (необов’язково)',value,'text',
+      'maxlength="50" aria-describedby="'+id+'-count"')+
+      '<small class="comment-count" id="'+id+'-count">'+value.length+' / 50</small>';
+  }
+  function incomeScreen() {
+    const account = aBy(params.id);
+    const selected = params.currency || Object.keys(account.balances)[0];
+    const currencyOptions = currencies.map(currency =>
+      '<label class="currency-option"><input type="radio" name="income-currency" value="'+currency+'"'+
+      (currency===selected?' checked':'')+'><span>'+currency+'</span></label>').join('');
+    return header('Додати гроші','account')+form('income',
+      '<fieldset class="fld currency-field" id="i-currency"><legend>Валюта</legend><div class="chips">'+currencyOptions+'</div></fieldset>'+
+      field('i-amount','Сума','','text','inputmode="numeric" data-integer required')+commentField('i-note'));
+  }
   function transferScreen() {
     const a=aBy(params.id), currency=params.currency||Object.keys(a.balances)[0], others=p.accounts.filter(x=>!x.archived&&x.id!==a.id);
     if(!others.length)return header('Переказ','account')+'<div class="info">Спочатку додайте інший рахунок.</div>'+button('Додати рахунок','go','account-new');
@@ -133,10 +160,18 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
   }
   function contributeScreen() {const g=gBy(params.id);return header('Внести в ціль','goal')+'<p class="note">'+esc(g.name)+' · вільно '+shown(E.free(p,store.rates))+'</p>'+form('contribute',select('c-currency','Валюта ваших грошей',options(currencies,g.currency))+field('c-amount','Внести','','text','inputmode="decimal" required')+'<div class="info">Гроші залишаються на рахунках. Внесок лише позначає їх як відкладені. Більше потрібної суми не резервуємо.</div>');}
   function purchaseScreen() { const g=gBy(params.id), acc=p.accounts.filter(a=>!a.archived);return header('Купити: '+esc(g.name),'goal')+form('purchase',field('b-price','Фактично сплачена сума',g.target/100,'text','inputmode="decimal" required')+select('b-currency','Валюта платежу',options(currencies,g.currency))+select('b-account','Рахунок оплати',options(acc,acc.find(a=>Object.keys(a.balances).includes(g.currency))?.id||acc[0].id,a=>a.name))+'<div class="pv" id="purchase-preview"></div><div class="info">Запишемо одну витрату та завершимо ціль. Невикористані накопичення стануть вільними. Якщо ціна більша за накопичене, решта береться з вільних.</div>','Записати покупку');}
+  function editHistory(event) {
+    if (!event.revisions?.length) return '';
+    return '<div class="sec"><h2>Історія виправлень</h2></div><div class="card">'+
+      event.revisions.map(revision => '<p class="note">'+dateLabel(revision.date)+
+        (revision.before.amount !== undefined ? ' · '+money(revision.before.amount,event.currency)+' → '+money(revision.after.amount,event.currency) : '')+
+        (revision.before.note !== undefined ? ' · Опис: '+esc(revision.before.note||'—')+' → '+esc(revision.after.note||'—') : '')+
+        '</p>').join('')+'</div>';
+  }
   function eventScreen() {
     const e=p.history.find(x=>x.id===params.id);if(!e)return header('Історія','more');
     const editable=['expense','month-total','balance','income'].includes(e.type), raw=store.events.find(x=>x.id===e.id);
-    return header(esc(e.note||eventNames[e.type]),e.account?'account':'more')+'<p class="note">'+dateLabel(e.date)+(e.account?' · '+esc(aBy(e.account)?.name||''):'')+'</p><div class="pv">'+(e.currency&&e.amount!==undefined?'<div class="r2"><span>'+ (e.type==='balance'?'Фактичний залишок':e.type==='month-total'?'Усього за місяць':'Сума')+'</span><b>'+money(e.amount,e.currency)+'</b></div>':'')+(e.estimatedExpense?'<div class="r2"><span>Витрати за залишком</span><b>−'+money(e.estimatedExpense,e.currency)+'</b></div>':'')+(e.effective!==undefined?'<div class="r2"><span>Окремі покупки вже враховано</span><b>'+money(e.detail,e.currency)+'</b></div><div class="r2"><span>Додано до витрат</span><b>'+money(e.effective,e.currency)+'</b></div>':'')+coverText(e.cover||[])+(e.salary?'<div class="r2"><span>Зарплата</span><b>'+money(e.salary.amount,e.salary.currency)+'</b></div>':'')+(e.contributions||[]).map(c=>'<div class="r2"><span>'+esc(gBy(c.goal)?.name||c.goal)+'</span><b>'+money(c.amount,c.currency)+'</b></div>').join('')+'</div>'+(e.type==='account-remove'?'<div class="info">'+(e.mode==='transfer'?'Усі валютні залишки перенесено на «'+esc(e.destinationName||aBy(e.to)?.name||'')+'». Загальна сума не змінилась.':'Залишки прибрано із загальної суми. Це не витрата, накопичення цілей не змінено.')+(e.salaryRedirected?'<br>Майбутню зарплату спрямовано на рахунок отримання.':e.salaryDisabled?'<br>Автоматичну зарплату для видаленого рахунку вимкнено.':'')+'</div>':'')+(e.void?'<div class="warn">Операцію скасовано. Ефекти перераховано.</div>':'')+(e.superseded?'<div class="info">Пізніший запис замінив цей підсумок. Повторного списання немає.</div>':'')+(editable&&!e.void?form('event-edit',field('e-amount','Виправити суму',e.amount/100,'text','inputmode="decimal" required')+field('e-note','Опис',e.note||'','text','maxlength="100"'),'Зберегти виправлення'):'')+button(e.void?'Відновити операцію':'Скасувати операцію','event-void',e.id,'second '+(!e.void?'danger':''))+'<p class="note">Виправлення перераховує наступні записи та розподіл по цілях. Наступна звірка залишається фактичним залишком. Дію, що створює від’ємний баланс, не збережемо.</p>';
+    return header(esc(e.note||eventNames[e.type]),e.account?'account':'more')+'<p class="note">'+dateLabel(e.date)+(e.account?' · '+esc(aBy(e.account)?.name||''):'')+'</p><div class="pv">'+(e.currency&&e.amount!==undefined?'<div class="r2"><span>'+ (e.type==='balance'?'Фактичний залишок':e.type==='month-total'?'Усього за місяць':'Сума')+'</span><b>'+money(e.amount,e.currency)+'</b></div>':'')+(e.estimatedExpense?'<div class="r2"><span>Витрати за залишком</span><b>−'+money(e.estimatedExpense,e.currency)+'</b></div>':'')+(e.effective!==undefined?'<div class="r2"><span>Окремі покупки вже враховано</span><b>'+money(e.detail,e.currency)+'</b></div><div class="r2"><span>Додано до витрат</span><b>'+money(e.effective,e.currency)+'</b></div>':'')+coverText(e.cover||[])+(e.salary?'<div class="r2"><span>Зарплата</span><b>'+money(e.salary.amount,e.salary.currency)+'</b></div>':'')+(e.contributions||[]).map(c=>'<div class="r2"><span>'+esc(gBy(c.goal)?.name||c.goal)+'</span><b>'+money(c.amount,c.currency)+'</b></div>').join('')+'</div>'+(e.type==='account-remove'?'<div class="info">'+(e.mode==='transfer'?'Усі валютні залишки перенесено на «'+esc(e.destinationName||aBy(e.to)?.name||'')+'». Загальна сума не змінилась.':'Залишки прибрано із загальної суми. Це не витрата, накопичення цілей не змінено.')+(e.salaryRedirected?'<br>Майбутню зарплату спрямовано на рахунок отримання.':e.salaryDisabled?'<br>Автоматичну зарплату для видаленого рахунку вимкнено.':'')+'</div>':'')+(e.void?'<div class="warn">Операцію скасовано. Ефекти перераховано.</div>':'')+(e.superseded?'<div class="info">Пізніший запис замінив цей підсумок. Повторного списання немає.</div>':'')+editHistory(e)+(editable&&!e.void?form('event-edit',field('e-amount','Виправити суму',e.amount/100,'text','inputmode="decimal" required')+commentField('e-note',e.note||''),'Зберегти виправлення'):'')+button(e.void?'Відновити операцію':'Скасувати операцію','event-void',e.id,'second '+(!e.void?'danger':''))+'<p class="note">Виправлення перераховує наступні записи та розподіл по цілях. Наступна звірка залишається фактичним залишком. Дію, що створює від’ємний баланс, не збережемо.</p>';
   }
   function forecast() {
     const monthly=p.salary?.auto?p.salary.amount*store.rates[p.salary.currency]:0, planValue=(store.expensePlan||0)*store.rates[store.expensePlanCurrency||store.currency], exp=Math.round(planValue/store.rates[store.currency]), current=E.total(p,store.rates), target=current+period*(monthly-planValue);
@@ -146,7 +181,71 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
     return header('Прогноз')+'<div class="seg">'+[1,3,6,12].map(n=>button(n+' міс.','period',n,'','aria-pressed="'+(period===n)+'"')).join('')+'</div><div class="chart">'+svg+'<div class="legend"><span><i style="border-color:var(--ink)"></i>зараз</span><span><i style="border-color:var(--accent);border-top-style:dashed"></i>прогноз</span></div></div><div class="pv"><div class="r2"><span>Зараз (факт)</span><b>'+shown(current)+'</b></div><div class="r2"><span>Через '+period+' міс. (прогноз)</span><b>'+shown(target)+'</b></div><div class="r2"><span>Плановий дохід на місяць</span><b>'+shown(monthly)+'</b></div></div>'+form('expense-plan',field('f-plan','Планові витрати на місяць, '+store.currency,exp/100,'text','inputmode="decimal"'),'Оновити прогноз')+'<p class="note">Оцінка за незмінних курсів та плану. Внески в цілі капітал не зменшують. Це оцінка, а не гарантія.</p>';
   }
   function salaryScreen() { const s=p.salary||{account:p.accounts[0].id,currency:'USD',amount:0,day:5,auto:false};return header('Зарплата','more')+form('salary',select('s-account','Куди надходить',options(p.accounts.filter(a=>!a.archived),s.account,a=>a.name))+select('s-currency','Валюта',options(currencies,s.currency))+field('s-amount','Сума на місяць',s.amount/100,'text','inputmode="decimal" required')+field('s-day','Число місяця',s.day,'number','min="1" max="28" required')+toggle('s-auto','Зараховувати автоматично',s.auto,'Для прототипу — один раз за кожен демо-місяць')+'<p class="note">Зміни діють на наступні нарахування. Демо не перевіряє фактичне надходження в банку.</p>');}
-  function accountForm() {return header('Новий рахунок','accounts')+form('account-create',field('a-name','Назва','','text','required maxlength="60"')+select('a-type','Тип',options(types,'bank',t=>names[t]))+select('a-currency','Перша валюта',options(currencies,store.currency))+field('a-amount','Зараз є',0,'text','inputmode="decimal" required'));}
+  function accountForm() {
+    return header('Новий рахунок','accounts')+form('account-create',
+      select('a-type','Тип',options(types,'bank',t=>names[t]))+
+      field('a-name','Уточнення назви (необов’язково)','','text','maxlength="60" placeholder="Наприклад, Монобанк"')+
+      '<p class="note" id="account-name-preview">Назва: Банківський рахунок</p>'+
+      select('a-currency','Перша валюта',options(currencies,store.currency))+
+      field('a-amount','Зараз є',0,'text','inputmode="decimal" required'));
+  }
+  function newAccountName() {
+    const suffix = val('a-name').trim().replace(/\s+/g,' ');
+    return names[val('a-type')] + (suffix ? ' · '+suffix : '');
+  }
+  function validateAccountName(name, ownId) {
+    const key = text => text.normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase('uk-UA');
+    if (p.accounts.some(account => !account.deleted && account.id !== ownId && key(account.name) === key(name))) {
+      throw new Error('Рахунок із такою назвою вже є. Вкажіть іншу назву.');
+    }
+  }
+  function groupAmount(input) {
+    const raw = input.value;
+    const clean = text => text.replace(/\s/g,'');
+    const plain = clean(raw);
+    if (input.hasAttribute('data-integer')) {
+      if (!/^\d*$/.test(plain)) {
+        input.value = input.dataset.lastValidAmount || '';
+        return;
+      }
+      input.dataset.lastValidAmount = raw;
+    }
+    if (!/^\d*(?:[,.]\d*)?$/.test(plain)) return;
+    const formatted = plain.replace(/^\d+/, digits => digits.replace(/\B(?=(\d{3})+(?!\d))/g,' '));
+    if (formatted === raw) return;
+    const position = input.selectionStart;
+    const digitsBeforeCaret = position === null ? plain.length : clean(raw.slice(0,position)).length;
+    input.value = formatted;
+    if (input.hasAttribute('data-integer')) input.dataset.lastValidAmount = formatted;
+    if (position === null) return;
+    let end = 0, count = 0;
+    while (end < formatted.length && count < digitsBeforeCaret) {
+      if (formatted[end] !== ' ') count++;
+      end++;
+    }
+    input.setSelectionRange(end,end);
+  }
+  function refreshMoneyFields() {
+    const fixed = {'q-amount':params.currency,'edit-amount':params.currency,'e-amount':p.history.find(event=>event.id===params.id)?.currency,'f-plan':store.currency};
+    const selects = {'a-amount':'a-currency','i-amount':'i-currency','x-amount':'x-currency','x-fee':'x-currency','x-received':'x-to-currency','g-target':'g-currency','g-monthly':'g-currency','c-amount':'c-currency','b-price':'b-currency','s-amount':'s-currency'};
+    for (const input of $('view').querySelectorAll('input[inputmode="decimal"], input[data-integer]')) {
+      const currency = fixed[input.id] || val(selects[input.id]);
+      if (!currency) continue;
+      let suffix = input.nextElementSibling;
+      if (!suffix?.classList.contains('money-suffix')) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'money-input';
+        input.before(wrapper);
+        wrapper.append(input);
+        suffix = document.createElement('span');
+        suffix.className = 'money-suffix';
+        suffix.setAttribute('aria-hidden','true');
+        wrapper.append(suffix);
+      }
+      suffix.textContent = symbols[currency] || currency;
+      groupAmount(input);
+    }
+  }
   function more() {
     const looks=[['a','А · Синій',['#1F4DB8','#4C74D2','#7FA0E3']],['b','Б · Ніч',['#7FB2FF','#5E8FD6','#335185']],['c','В · Графіт',['#2B2B2B','#8A8885','#1F6F5E']]];
     return header('Ще')+'<div class="sec"><h2>Основна валюта</h2></div><div class="chips">'+currencies.map(c=>button(({USD:'Долар',EUR:'Євро',UAH:'Гривня',GBP:'Фунт'}[c])+' '+symbols[c],'set-currency',c,'pill','aria-pressed="'+(store.currency===c)+'"')).join('')+'</div><p class="note">Вона підставляється за замовчуванням у нові цілі та використовується для підсумків.</p><div class="list">'+row('Дохід і витрати','Зарплата та щомісячний план',ic('right',18),'go','salary')+row('Курси валют','',ic('right',18),'go','rates')+row('Історія операцій','',ic('right',18),'go','history')+row('Колекція котів','',ic('right',18),'go','cats')+'</div><div class="sec"><h2>Вигляд</h2></div><div class="looks">'+looks.map(([id,n,colors])=>button('<span>'+n+'</span><span class="sws">'+colors.map(c=>'<i style="background:'+c+'"></i>').join('')+'</span>','look',id,'look','aria-pressed="'+(store.look===id)+'"')).join('')+'</div><div class="sec"><h2>Анімації</h2></div><div class="opt">'+toggle('calm-mode','Без руху',store.calm,'Показує зміни без анімації')+'</div><div class="sec"><h2>Спробувати місяць</h2><span>'+dateLabel(store.date)+'</span></div>'+button('Нарахувати цей місяць','process-month','','second')+button('Перейти до наступного місяця','next-month')+'<p class="note">Зарплата та внески виконуються один раз на демо-місяць.</p><div class="sec"><h2>Демо-сценарії</h2></div><div class="demo-grid">'+button('Почати заново','reset','standard','second compact')+button('Без цілей','reset','no-goals','second compact')+button('Нестача коштів','reset','shortage','second compact')+button('Ноутбук за $500','reset','laptop','second compact')+'</div><p class="note">Прототип v3: цифри вигадані, зміни зберігаються лише у власному демо-сховищі. Справжній застосунок не змінюється.</p><a class="note" href="prototype-v2.html">Відкрити попередній прототип v2 ↗</a>';
@@ -161,6 +260,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
     if(overlay)html+=overlay;
     $('view').innerHTML=(toast?'<div class="toast-v3" role="status">'+esc(toast)+'</div>':'')+(storageWarning?'<div class="warn">'+esc(storageWarning)+'</div>':'')+html;
     $('tabs').innerHTML=[['home','Головна','tabHome'],['accounts','Рахунки','tabAcc'],['goals','Цілі','tabGoal'],['forecast','Прогноз','tabFc'],['more','Ще','tabMore']].map(([id,n,icon])=>'<button type="button" class="tab" data-action="go" data-id="'+id+'" '+(lastTab===id?'aria-current="page"':'')+'>'+ic(icon)+'<span>'+n+'</span></button>').join('');
+    refreshMoneyFields();
     if(route==='quick')previewQuick();
     if(route==='goal-new')previewGoal();
     if(route==='purchase')previewPurchase();
@@ -170,12 +270,48 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
     document.querySelectorAll('.swipe-account').forEach(card=>{const on=card.dataset.swipeId===id;card.classList.toggle('open',on);card.querySelector('.swipe-body').style.transform='';const trash=card.querySelector('.swipe-trash');trash.tabIndex=on?0:-1;trash.setAttribute('aria-hidden',on?'false':'true');});
   }
   function closeDeleteDialog() { const dialog=$('account-delete-dialog');if(dialog&&dialog.open)dialog.close();deleteAccountId=null;$('ov').innerHTML=''; }
-  function showDeleteDialog(id) {
-    const a=aBy(id);if(!a||a.deleted)throw new Error('Рахунок уже видалено.');setSwipeOpen(null);deleteAccountId=id;
-    const other=p.accounts.filter(x=>!x.archived&&!x.deleted&&x.id!==id);
-    const balances=Object.entries(a.balances).filter(([,n])=>n>0).map(([c,n])=>money(n,c)).join(' · ')||'0';
-    $('ov').innerHTML='<dialog id="account-delete-dialog" class="account-delete-dialog" aria-labelledby="account-delete-title"><div class="sheet-handle" aria-hidden="true"></div><h2 id="account-delete-title">Видалити «'+esc(a.name)+'»?</h2><p class="note">На рахунку: '+balances+'</p>'+(other.length?form('delete-transfer',select('delete-target','Переказати всі кошти на',options(other,other[0].id,x=>x.name))+'<p class="note">Усі валюти залишаться у своїх сумах. Загальна кількість грошей не зміниться.</p>','Переказати й видалити'):'<p class="note">Немає іншого рахунку для переказу.</p>')+button('Видалити разом із сумою','delete-account-remove',id,'second danger')+'<p class="note">Сума перестане враховуватись. Це не витрата.</p>'+button('Скасувати','delete-account-cancel','','second')+'<div class="error" id="delete-error" role="alert"></div></dialog>';
-    const dialog=$('account-delete-dialog');dialog.addEventListener('cancel',ev=>{ev.preventDefault();closeDeleteDialog();});dialog.showModal();
+  function showDeleteDialog(id, choosingDestination = false) {
+    const account = aBy(id);
+    if (!account || account.deleted) throw new Error('Рахунок уже видалено.');
+    if ($('account-delete-dialog')?.open) closeDeleteDialog();
+    setSwipeOpen(null);
+    deleteAccountId = id;
+    const others = p.accounts.filter(a => !a.archived && !a.deleted && a.id !== id);
+    const balances = Object.entries(account.balances).filter(([,n]) => n > 0).map(([c,n]) => money(n,c)).join(' · ') || '0';
+    const title = choosingDestination ? 'Куди переказати кошти?' : 'Видалити «' + esc(account.name) + '»?';
+    const actions = choosingDestination
+      ? (others.length
+        ? form('delete-transfer',select('delete-target','Рахунок отримання',options(others,others[0].id,a=>a.name)),'Переказати й видалити')
+        : '<p class="note">Немає іншого рахунку для переказу.</p>') +
+        button('Назад','delete-account-dialog',id,'second')
+      : button('Видалити','delete-account-remove',id,'second danger') +
+        button('Переказати на інший рахунок','delete-account-choose',id,'second');
+    $('ov').innerHTML = '<dialog id="account-delete-dialog" class="account-delete-dialog" aria-labelledby="account-delete-title">' +
+      '<div class="sheet-drag"><div class="sheet-handle" aria-hidden="true"></div><h2 id="account-delete-title">'+title+'</h2></div>' +
+      button('×','delete-account-cancel','','iconbtn sheet-close','aria-label="Закрити" autofocus') +
+      '<p class="note">На рахунку: '+balances+'</p>'+actions+'<div class="error" id="delete-error" role="alert"></div></dialog>';
+    const dialog = $('account-delete-dialog');
+    const handle = dialog.querySelector('.sheet-drag');
+    let drag;
+    handle.addEventListener('pointerdown', event => {
+      if (!event.isPrimary || event.button !== 0) return;
+      drag = { id:event.pointerId, x:event.clientX, y:event.clientY };
+      handle.setPointerCapture(event.pointerId);
+    });
+    handle.addEventListener('pointermove', event => {
+      if (drag?.id !== event.pointerId) return;
+      dialog.style.transform = 'translateY('+Math.max(0,event.clientY-drag.y)+'px)';
+    });
+    handle.addEventListener('pointerup', event => {
+      if (drag?.id !== event.pointerId) return;
+      const distance = event.clientY-drag.y;
+      if (distance > 65 && distance > Math.abs(event.clientX-drag.x)) closeDeleteDialog();
+      drag = null;
+      dialog.style.transform = '';
+    });
+    handle.addEventListener('pointercancel', () => { drag = null; dialog.style.transform = ''; });
+    dialog.addEventListener('cancel', event => { event.preventDefault(); closeDeleteDialog(); });
+    dialog.showModal();
   }
   // A horizontal drag reveals one trash button; normal vertical scroll is untouched.
   document.addEventListener('pointerdown',ev=>{
@@ -196,6 +332,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
   document.addEventListener('click',function(ev){const b=ev.target.closest('[data-action]');if(!b)return;const act=b.dataset.action,id=b.dataset.id;try{
     if(Date.now()<suppressSwipeClickUntil&&act==='account'){ev.preventDefault();return;}
     if(act==='delete-account-dialog'){showDeleteDialog(id);return;}
+    if(act==='delete-account-choose'){showDeleteDialog(id,true);return;}
     if(act==='delete-account-cancel'){closeDeleteDialog();return;}
     if(act==='delete-account-remove'){commit({type:'account-remove',account:deleteAccountId,mode:'remove'},'Рахунок і його суму прибрано з обліку.');closeDeleteDialog();return goWithToast('accounts');}
     if(act==='account'&&openSwipeId===id){setSwipeOpen(null);return;}
@@ -245,12 +382,17 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
     if(type==='event-edit'){persist(E.edit(store,params.id,{amount:amount(val('e-amount')),note:val('e-note').trim()}));toast='Виправлено. Залишки, цілі та строки перераховано.';return render();}
     if(type==='salary'){const n=amount(val('s-amount'));if(!n)throw new Error('Вкажіть додатну суму зарплати.');commit({type:'salary-settings',salary:{account:val('s-account'),currency:val('s-currency'),amount:n,day:Number(val('s-day')),auto:$('s-auto').checked}},'План зарплати збережено.');return goWithToast('more');}
     if(type==='expense-plan'){persist({...store,expensePlan:amount(val('f-plan')),expensePlanCurrency:store.currency});toast='Прогноз оновлено. Фактичні гроші не змінились.';return render();}
-    if(type==='account-create'){const name=val('a-name').trim();if(!name)throw new Error('Вкажіть назву рахунку.');const id='a'+(store.sequence+1);commit({type:'account-create',accountData:{id,name,type:val('a-type'),color:(store.sequence%4)+1,balances:{[val('a-currency')]:amount(val('a-amount'))},checked:store.date}},'Рахунок додано. Це початковий залишок, не дохід.');return goWithToast('account',{id});}
+    if(type==='account-create'){const name=newAccountName();validateAccountName(name);const id='a'+(store.sequence+1);commit({type:'account-create',accountData:{id,name,type:val('a-type'),color:(store.sequence%4)+1,balances:{[val('a-currency')]:amount(val('a-amount'))},checked:store.date}},'Рахунок додано. Це початковий залишок, не дохід.');return goWithToast('account',{id});}
     if(type==='rates'){const rates={UAH:1};for(const c of currencies.filter(c=>c!=='UAH')){const r=Number(val('rate-'+c));if(!Number.isFinite(r)||r<=0||r>1e8)throw new Error('Курс має бути додатним числом.');rates[c]=r;}persist({...store,rates});toast='Курси оновлено. Оригінальні суми не змінились.';return render();}
-    if(type==='rename'){const name=val('rename-name').trim();if(!name)throw new Error('Вкажіть назву.');commit({type:'account-settings',account:params.id,changes:{name}},'Назву змінено.');overlay=null;return render();}
+    if(type==='rename'){const name=val('rename-name').trim();if(!name)throw new Error('Вкажіть назву.');validateAccountName(name,params.id);commit({type:'account-settings',account:params.id,changes:{name}},'Назву змінено.');overlay=null;return render();}
   }catch(e){fail(e);}});
-  document.addEventListener('input',function(ev){if(route==='quick'&&['q-amount','q-expense'].includes(ev.target.id))previewQuick();if(route==='goal-new')previewGoal();if(route==='purchase')previewPurchase();if(route==='transfer'&&['x-amount','x-currency','x-to-currency'].includes(ev.target.id)){try{$('x-received').value=Math.round(amount(val('x-amount'))*store.rates[val('x-currency')]/store.rates[val('x-to-currency')])/100;}catch(_){}}});
+  document.addEventListener('input',function(ev){if(ev.target.matches('.money-input input'))groupAmount(ev.target);
+    const counter = $(ev.target.id+'-count');
+    if(counter) counter.textContent=ev.target.value.length+' / 50';
+    if(ev.target.id==='a-name')$('account-name-preview').textContent='Назва: '+newAccountName();if(route==='quick'&&['q-amount','q-expense'].includes(ev.target.id))previewQuick();if(route==='goal-new')previewGoal();if(route==='purchase')previewPurchase();if(route==='transfer'&&['x-amount','x-currency','x-to-currency'].includes(ev.target.id)){try{$('x-received').value=Math.round(amount(val('x-amount'))*store.rates[val('x-currency')]/store.rates[val('x-to-currency')])/100;groupAmount($('x-received'));}catch(_){}}});
   document.addEventListener('change',function(ev){const id=ev.target.id;try{
+    if(id==='a-type')$('account-name-preview').textContent='Назва: '+newAccountName();
+    if(id.endsWith('currency')||ev.target.name==='income-currency')refreshMoneyFields();
     if(id==='show-currency'){persist({...store,currency:ev.target.value});return render();}
     if(id==='q-detail'){quick.detail=ev.target.checked;return render();}
     if(id==='q-expense')return previewQuick();

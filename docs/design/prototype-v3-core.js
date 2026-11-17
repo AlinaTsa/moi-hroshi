@@ -154,6 +154,7 @@
       else if (e.type === 'account-settings') {
         const a = account(p, e.account);
         if (e.changes.archived && value(a.balances, rates) !== 0) throw new Error('Архівувати можна рахунок із нульовими залишками. Спершу переказуйте гроші.');
+        if (e.changes.name !== undefined && e.changes.name !== a.name) r.previousName = a.name;
         Object.assign(a, e.changes);
       } else if (e.type === 'salary-settings') { account(p, e.salary.account); p.salary = clone(e.salary); }
       else if (e.type === 'month') {
@@ -185,7 +186,7 @@
         if (prior.amount === payload.amount) return next;
         const index = next.events.findIndex(e => e.id === prior.id);
         if (next.events.slice(index + 1).some(e => !e.void && e.type === 'balance' && e.account === payload.account && e.currency === payload.currency)) throw new Error('Після цього підсумку вже звіряли фактичний залишок. Оновіть його через «Залишилось»; історичний підсумок зараз захищений від повторного списання.');
-        prior.amount = payload.amount; project(next); return next;
+        return edit(store, prior.id, { amount: payload.amount });
       }
     }
     const enriched = { ...clone(payload), rates: clone(store.rates) };
@@ -205,6 +206,15 @@
     if (!e) throw new Error('Операцію не знайдено.');
     const ix = next.events.indexOf(e);
     if (e.account && next.events.slice(ix + 1).some(x => !x.void && x.type === 'balance' && x.account === e.account && x.currency === e.currency)) throw new Error('Після цієї операції вже звіряли фактичний залишок. Для цього демо змініть останню звірку, щоб не переписувати залежну історію.');
+    const before = {}, after = {};
+    for (const key of ['amount', 'note']) {
+      if (changes[key] === undefined || changes[key] === e[key]) continue;
+      before[key] = e[key] ?? '';
+      after[key] = changes[key];
+    }
+    if (Object.keys(after).length) {
+      (e.revisions ??= []).push({ date: store.date, before, after });
+    }
     Object.assign(e, clone(changes));
     if (e.type === 'balance' && changes.amount !== undefined && e.asExpense) {
       const prefix = clone(next); prefix.events = prefix.events.slice(0, ix);
