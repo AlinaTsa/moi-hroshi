@@ -268,9 +268,6 @@
   .current-balance{margin:0}
   .current-balance:empty{display:none}
   .primary:disabled{opacity:1;background:var(--track);color:var(--muted);cursor:default}
-  .currency-group{display:grid}
-  .currency-group-title{padding:8px 12px 4px;color:var(--muted);font-size:13px;font-weight:600}
-  .currency-group+.currency-group{margin-top:4px;border-top:1px solid var(--line)}
   .currency-item{min-height:44px;text-align:left;padding:8px 12px;border:0;border-radius:10px;background:transparent}
   .currency-item[aria-pressed="true"]{background:var(--sel);color:var(--accent)}
   .transfer-block{display:flex;flex-direction:column;gap:12px}
@@ -283,7 +280,7 @@
   .initial-balance>.fld:first-child>.currency-caption{min-height:32px;padding-right:36px}
   .initial-balance>.remove-balance{position:absolute;right:8px;top:5px;border-color:transparent;background:transparent;font-size:24px}
   .currency-search{margin-bottom:4px;max-width:100%}
-  .currency-group[hidden],.currency-item[hidden],.currency-no-results[hidden]{display:none}
+  .currency-item[hidden],.currency-no-results[hidden]{display:none}
   .contribution-sources{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
   .contribution-sources .pill{display:inline-flex;align-items:center;gap:7px;font-size:14px}
   #c-sources>summary{min-height:44px;display:list-item;padding:10px 0;cursor:pointer}
@@ -295,4 +292,4 @@
   .goal-confirm p{line-height:1.5}
   .goal-confirm button{width:100%;margin-top:10px}
   .purchase-options{display:grid;gap:12px}
-</style></head><body data-look="a"><div class="app"><main id="view"></main><div id="app-toast" class="toast-v3" role="status"></div><nav class="tabs" id="tabs" aria-label="Розділи"></nav><div id="ov"></div></div><script src="prototype-v3-core.js?v=20261118-goal-payments"></script><script src="prototype-v3-art.js?v=20261118-goal-payments"></script><script src="prototype-v3-ui.js?v=20261118-goal-validation"></script></body></html>
+</style></head><body data-look="a"><div class="app"><main id="view"></main><div id="app-toast" class="toast-v3" role="status"></div><nav class="tabs" id="tabs" aria-label="Розділи"></nav><div id="ov"></div></div><script src="prototype-v3-core.js?v=20261118-goal-payments"></script><script src="prototype-v3-art.js?v=20261118-goal-payments"></script><script src="prototype-v3-ui.js?v=20261118-currency-menu"></script></body></html>

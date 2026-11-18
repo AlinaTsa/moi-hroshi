@@ -212,21 +212,16 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
   function coverText(records) { return records.map(r=>'<div class="r2"><span>Із цілі «'+esc(gBy(r.goal)?.name||r.goal)+'»</span><b>'+Object.entries(r.amounts).map(([c,n])=>money(n,c)).join(' + ')+'</b></div>').join(''); }
   function currencyPicker(id, codes, selected, label='Валюта', searchable=false, existing=[]) {
     const quickChoices=searchable?existing:codes;
-    return movementPicker(id,codes,selected,label,'Виберіть валюту',currencyLabel,searchable,existing)+
+    return movementPicker(id,codes,selected,label,'Виберіть валюту',currencyLabel,searchable)+
       (quickChoices.length?'<div class="quick-currencies" role="group" aria-label="Швидкий вибір: '+label+'">'+
         quickChoices.map(code=>button(esc(code),'pick-movement-currency',code,'pill',
           'data-field="'+id+'" data-quick-currency aria-pressed="'+(code===selected)+'"')).join('')+'</div>':'');
   }
-  function movementPicker(id, codes, selected, label, placeholder, itemLabel, searchable=false, existing=[]) {
+  function movementPicker(id, codes, selected, label, placeholder, itemLabel, searchable=false) {
     const title = selected ? itemLabel(selected) : placeholder;
     const renderItems = list => list.map(code => button(esc(itemLabel(code)),'pick-movement-currency',code,'currency-item',
       'data-field="'+id+'" aria-pressed="'+(code===selected)+'"')).join('');
-    const group = (list, name) => list.length ?
-      '<div class="currency-group" role="group" aria-label="'+name+'"><div class="currency-group-title" aria-hidden="true">'+name+'</div>'+renderItems(list)+'</div>' : '';
-    const onAccount = new Set(existing);
-    const items = onAccount.size ?
-      group(codes.filter(code=>onAccount.has(code)),'На цьому рахунку')+
-      group(codes.filter(code=>!onAccount.has(code)),'Інші валюти') : renderItems(codes);
+    const items = renderItems(codes);
     return '<div class="fld"><span class="currency-caption" id="'+id+'-label">'+label+'</span>'+
       '<input type="hidden" id="'+id+'" value="'+esc(selected||'')+'">'+
       '<details class="movement-picker"><summary class="inp" id="'+id+'-control" aria-labelledby="'+id+'-label '+id+'-control">'+
@@ -467,7 +462,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
     const goal=gBy(params.id), accounts=p.accounts.filter(a=>!a.archived&&!a.deleted);
     if(!accounts.length)return header('Записати покупку','goal')+'<p class="info">Додайте рахунок для оплати.</p>'+button('Додати рахунок','go','account-new');
     if(!params.paymentMode)return header('Як оплачуєте?','goal')+'<p class="note">'+esc(goal.name)+'</p><div class="purchase-options">'+
-      [['full','Оплачую повністю'],['part','Оплачую частину'],['credit','Купую в кредит']].map(([id,label])=>button(label,'purchase-mode',id,'second')).join('')+'</div>';
+      [['full','Оплачую повністю'],['part','Оплачую частину'],['credit','Кредит / іпотека']].map(([id,label])=>button(label,'purchase-mode',id,'second')).join('')+'</div>';
     const mode=params.paymentMode, draft=params.paymentDraft;
     if(mode==='credit'&&draft)return header('Умови кредиту','goal')+form('credit-purchase',
       '<p class="note">Перший внесок: '+money(draft.amount,draft.currency)+'</p>'+
