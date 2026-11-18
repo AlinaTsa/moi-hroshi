@@ -82,6 +82,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
     catch (_) {throw Error('Не вдалося зберегти v4. Перевірте вільне місце й дозвіл браузера на збереження.');}
     store=next;initialized=true;storageWarning='';
     currencies=Object.keys(store.rates);
+    document.dispatchEvent(new Event('v4-ready'));
   }
   function commit(event,msg) { persist(E.append(store,event)); toast=msg||'Збережено'; }
   function go(next, data={}, notice='') { route=next; params=data; toast=notice; overlay=null; if (['home','accounts','goals','forecast','more'].includes(next)) lastTab=next; render(); $('view').scrollTop=0; }
@@ -1289,6 +1290,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
     if(route==='purchase')previewPurchase();
   }catch(e){fail(e);}});
   window.MonoReviewHost={
+    isReady:()=>initialized&&!startupBlocked,
     getAccounts:()=>E.project(store).accounts.filter(a=>!a.deleted&&!a.archived).map(a=>({id:a.id,name:a.name,type:a.type,balances:{...a.balances},bankSource:a.bankSource,sourceSnapshotId:a.sourceSnapshotId,sourceBalances:a.sourceBalances})),
     syncSnapshot: payload=>{
       if(!initialized)throw Error('Спочатку виберіть, з яких даних почати v4.');

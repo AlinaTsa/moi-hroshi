@@ -306,6 +306,10 @@
   #bank-panel input,#bank-panel select,#bank-panel button{font-size:15px;min-width:0;max-width:100%}
   #bank-panel .row,#bank-panel .wallet-row{min-width:0;max-width:100%}
   #bank-panel .tools>*{min-width:0}
+  .monthly-reminder{width:min(calc(100% - 32px),440px);padding:24px;border:0;border-radius:24px;background:var(--card);color:var(--ink)}
+  .monthly-reminder::backdrop{background:#0008}
+  .monthly-reminder h2{margin:0 0 14px}
+  .monthly-reminder button{width:100%;margin-top:14px}
 </style></head><body data-look="a"><div class="app"><main id="view"></main><section id="bank-panel" hidden><main>
 <button id="bank-back" type="button" data-action="go" data-id="accounts">← Рахунки</button>
 <h1>monobank</h1>
@@ -339,4 +343,4 @@
 <p class="note">Банківські залишки показано повністю. Особиста частка всього залишку спільної картки потребує початкового розподілу власності. Тут рахуємо лише підтверджені операції.</p>
 </section>
 <dialog id="review-dialog" aria-labelledby="dialog-title"><button id="close-dialog" class="close" type="button" aria-label="Закрити">×</button><h2 id="dialog-title"></h2><form id="review-form"><div id="dialog-fields"></div><p id="dialog-error" class="error" role="alert"></p><button id="dialog-submit" class="primary" type="submit">Зберегти</button></form></dialog>
-</main></section><div id="app-toast" class="toast-v3" role="status"></div><nav class="tabs" id="tabs" aria-label="Розділи"></nav><div id="ov"></div></div><script src="prototype-v4-core.js?v=20261119-v4"></script><script src="prototype-v4-art.js?v=20261119-v4"></script><script src="prototype-v4-bank-core.js?v=20261119-v4"></script><script src="prototype-v4-ui.js?v=20261119-v4"></script><script src="prototype-v4-review-core.js?v=20261119-v4"></script><script src="prototype-v4-mono.js?v=20261119-v4"></script></body></html>
+</main></section><div id="app-toast" class="toast-v3" role="status"></div><nav class="tabs" id="tabs" aria-label="Розділи"></nav><div id="ov"></div></div><script src="prototype-v4-core.js?v=20261119-v4"></script><script src="prototype-v4-art.js?v=20261119-v4"></script><script src="prototype-v4-bank-core.js?v=20261119-v4"></script><script src="prototype-v4-ui.js?v=20261119-reminder"></script><script src="prototype-v4-review-core.js?v=20261119-v4"></script><script src="prototype-v4-mono.js?v=20261119-v4"></script><script src="prototype-v4-reminder.js?v=20261119-reminder"></script></body></html>
