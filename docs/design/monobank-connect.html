@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src https://api.monobank.ua; img-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+<title>Підключити monobank · Мої гроші</title>
+<style>
+:root{color-scheme:light dark;--bg:#f3f4f6;--card:#fff;--ink:#1b2430;--muted:#5f6b7a;--line:#e6e9ed;--accent:#1f4db8;--bad:#b3402f}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1217;--card:#171d25;--ink:#e8edf2;--muted:#98a5b3;--line:#262f3a;--accent:#7fb2ff;--bad:#f08a7a}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,sans-serif}main{max-width:480px;margin:auto;padding:24px 20px 40px}h1{font-size:24px}h2{font-size:20px}p{line-height:1.5}a{color:var(--accent)}.note{font-size:14px;color:var(--muted)}.card{padding:16px;border-radius:18px;background:var(--card);margin:16px 0}label{display:block;margin:16px 0 8px}input,select,button{font:inherit;color:inherit;min-height:48px;border-radius:14px;width:100%;padding:12px;border:1px solid var(--line);background:var(--card)}button{cursor:pointer;margin-top:12px}button.primary{background:var(--accent);color:var(--bg);border:0;font-weight:600}button:disabled{opacity:.5;cursor:default}[hidden]{display:none!important}.row{display:flex;justify-content:space-between;align-items:start;gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}.row span{min-width:0;overflow-wrap:anywhere}.row b{white-space:nowrap}.row small{display:block;color:var(--muted);margin-top:5px}.error{color:var(--bad)}#status{min-height:24px}.total{font-size:28px;font-weight:600}.summary{display:grid;grid-template-columns:1fr 1fr;gap:12px}.summary strong{display:block;margin-top:6px}input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+</style>
+<script src="monobank-connect.js?v=20261118" defer></script>
+</head>
+<body><main>
+<a href="prototype-v3.html">← До моїх грошей</a>
+<h1>Підключити monobank</h1>
+<p class="note">Тут можна переглянути залишки й операції банку. Дані з’являться лише на цьому екрані.</p>
+<form id="connect-form" autocomplete="off">
+<label for="token">Токен monobank</label>
+<input id="token" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" required placeholder="Вставте токен">
+<button class="primary" id="connect" type="submit">Підключити</button>
+<p class="note">Токен передається безпосередньо monobank і зберігається в пам’яті цієї вкладки до відключення або оновлення сторінки.</p>
+<a href="https://api.monobank.ua/" target="_blank" rel="noopener noreferrer">Отримати токен у monobank</a>
+</form>
+<p id="status" role="status" aria-live="polite"></p>
+<section id="connected" hidden>
+<button id="disconnect" type="button">Відключити й очистити екран</button>
+<label for="account">Рахунок monobank</label><select id="account"></select>
+<div class="card"><div class="note">Залишок за даними банку</div><div class="total" id="balance"></div><p class="note" id="credit"></p><p class="note" id="checked"></p></div>
+<button id="statement" class="primary" type="button">Показати операції за 30 днів</button>
+<p class="note">Банк обмежує частоту запитів. Наступну виписку можна запитати через хвилину.</p>
+<div id="statement-summary" class="card" hidden><h2>За останні 30 днів</h2><div class="summary"><div>Надходження<strong id="income"></strong></div><div>Списання<strong id="outgoing"></strong></div></div><p class="note">Списання включають перекази й зняття готівки. Операції в обробці позначено окремо.</p><p class="note" id="period"></p></div>
+<div id="operations" aria-live="polite"></div>
+</section>
+</main></body></html>
