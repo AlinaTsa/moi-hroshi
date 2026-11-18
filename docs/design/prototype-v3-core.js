@@ -78,6 +78,65 @@
   function reserveFree(p, c) {
     return Math.max(0, p.accounts.reduce((s, a) => s + (a.deleted ? 0 : (a.balances[c] || 0)), 0) - p.goals.filter(live).reduce((s, g) => s + (g.holdings[c] || 0), 0));
   }
+  function floorMinor(n) {
+    // Tolerate only floating-point noise near an exact minor unit.
+    const tolerance = Math.min(0.000001, Number.EPSILON * Math.max(1, Math.abs(n)) * 8);
+    return Math.max(0, Math.floor(n + tolerance));
+  }
+  function validRate(rates, code) {
+    return Object.hasOwn(rates, code) && Number.isFinite(rates[code]) && rates[code] > 0;
+  }
+  function contributionLimit(p, rates, g) {
+    if (!validRate(rates, g.currency)) throw new Error('Потрібен курс валюти цілі.');
+    const limit = Math.min(free(p, rates), g.target * rates[g.currency] - value(g.holdings, rates));
+    if (!Number.isFinite(limit)) throw new Error('Потрібні курси всіх валют накопичень і рахунків.');
+    return Math.max(0, limit);
+  }
+  function planContribution(p, rates, goalId, targetMinor, allowedCodes) {
+    checkAmount(targetMinor, true);
+    const g = goal(p, goalId);
+    if (!live(g)) throw new Error('Ціль уже завершена.');
+    const allowed = allowedCodes == null ? null : new Set(allowedCodes);
+    const goalRate = rates[g.currency];
+    const limit = contributionLimit(p, rates, g);
+    const sources = Object.keys(rates).filter(code => validRate(rates, code) && (!allowed || allowed.has(code)))
+      .map(code => ({ code, units: reserveFree(p, code), rate: rates[code] }))
+      .filter(source => source.units > 0);
+    sources.sort((a, b) => (a.code === g.currency ? -1 : b.code === g.currency ? 1 : b.units * b.rate - a.units * a.rate || a.code.localeCompare(b.code)));
+    const available = floorMinor(Math.min(limit, sources.reduce((sum, source) => sum + source.units * source.rate, 0)) / goalRate);
+    const amounts = {};
+    let allocated = 0;
+    const budget = Math.min(targetMinor * goalRate, limit);
+    for (const { code, units, rate } of sources) {
+      const take = Math.min(units, floorMinor((budget - allocated) / rate));
+      if (take) {
+        amounts[code] = take;
+        allocated += take * rate;
+      }
+    }
+    return { available, amounts, complete: targetMinor === 0 || (allocated > 0 && targetMinor - allocated / goalRate < 1), equivalent: floorMinor(allocated / goalRate) };
+  }
+  function applyMixedContribution(p, rates, g, currency, amounts) {
+    if (!live(g)) throw new Error('Ціль уже завершена.');
+    if (currency !== g.currency || !amounts || typeof amounts !== 'object' || Array.isArray(amounts)) throw new Error('Некоректний внесок у ціль.');
+    const entries = Object.entries(amounts);
+    if (!entries.length) throw new Error('Вкажіть суму внеску.');
+    let allocated = 0;
+    for (const [code, units] of entries) {
+      checkAmount(units);
+      if (!validRate(rates, code)) throw new Error('Потрібен курс валюти внеску.');
+      if (units > reserveFree(p, code)) throw new Error('Недостатньо вільних грошей у валюті ' + code + '.');
+      allocated += units * rates[code];
+    }
+    const limit = contributionLimit(p, rates, g);
+    const holdings = { ...g.holdings };
+    for (const [code, units] of entries) holdings[code] = (holdings[code] || 0) + units;
+    const nextPool = p.goals.filter(live).reduce((sum, item) => sum + value(item === g ? holdings : item.holdings, rates), 0);
+    if (!Number.isFinite(allocated) || allocated > limit || nextPool > total(p, rates)) throw new Error('Внесок перевищує вільні гроші або залишок до цілі.');
+    // Validate all legs first so a rejected contribution applies none of them.
+    g.holdings = holdings;
+    return floorMinor(allocated / rates[currency]);
+  }
   function contribute(p, rates, g, c, amount, cap) {
     checkAmount(amount, true);
     const need = Math.max(0, (g.target - saved(g, rates)) * rates[g.currency] / rates[c]);
@@ -159,6 +218,9 @@
         const g = goal(p, e.goalId); if (!live(g)) throw new Error('Ціль уже завершена.');
         r.actual = contribute(p, rates, g, e.currency, e.amount, false);
         if (r.actual > 0 && !p.cats.includes('persist')) p.cats.push('persist');
+      } else if (e.type === 'contribute-mixed') {
+        r.actual = applyMixedContribution(p, rates, goal(p, e.goalId), e.currency, e.amounts);
+        if (!p.cats.includes('persist')) p.cats.push('persist');
       } else if (e.type === 'goal-release') {
         const g = goal(p, e.goalId); g.holdings = {}; g.status = 'archived';
       } else if (e.type === 'purchase') {
@@ -258,5 +320,5 @@
     project(next); return next;
   }
   function nextMonth(date) { const [y, m] = date.split('-').map(Number); return (m === 12 ? y + 1 : y) + '-' + String(m === 12 ? 1 : m + 1).padStart(2, '0') + '-05'; }
-  return { seed, clone, project, append, edit, value, total, pool, free, saved, eta, reserveFree, nextMonth, live };
+  return { seed, clone, project, append, edit, value, total, pool, free, saved, eta, reserveFree, planContribution, nextMonth, live };
 });
