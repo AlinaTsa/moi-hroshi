@@ -409,6 +409,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
       currencyPicker('g-currency',currencies,currency,'Валюта цілі',true,usedCurrencies())+
       field('g-target','Скільки потрібно?',g?g.target/100:'','text','inputmode="decimal" required placeholder="Наприклад, 50 000"')+
       field('g-monthly','Скільки відкладатимете щомісяця?',g?g.monthly/100:'','text','inputmode="decimal" placeholder="Наприклад, 100"')+
+      '<p class="field-hint" id="g-monthly-error" aria-live="polite"></p>'+
       toggle('g-auto','Відкладати щомісяця',g?g.auto:true,'Щомісяця відкладаємо з вільних грошей. Якщо зарплата налаштована, спочатку зарахуємо її. Гроші залишаться на рахунках.')+
       '<div class="info" id="goal-preview"></div>',g?'Зберегти зміни':'Створити ціль');
   }
@@ -799,15 +800,32 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
     } catch(error){$('purchase-error').textContent=error.message;}
   }
   function previewGoal() {
-    const preview=$('goal-preview');
+    const preview=$('goal-preview'), monthlyInput=$('g-monthly');
+    const submit=monthlyInput.form.querySelector('[type="submit"]');
+    const hint=$('g-monthly-error');
+    hint.textContent='';
+    monthlyInput.removeAttribute('aria-invalid');
+    submit.disabled=true;
     const raw=val('g-target');
     if(!raw){preview.textContent='Вкажіть вартість і щомісячний внесок, щоб побачити, коли зберете гроші.';return;}
     try {
       const target=amount(raw), monthly=amount(val('g-monthly')||'0'), currency=val('g-currency');
+      if(!target)throw new Error('Вкажіть суму цілі більше нуля.');
+      if(monthly>target){
+        hint.textContent='Щомісячний внесок не може перевищувати '+money(target,currency)+' — вартість усієї цілі.';
+        monthlyInput.setAttribute('aria-invalid','true');
+        monthlyInput.setAttribute('aria-describedby','g-monthly-error');
+        preview.textContent='';
+        return;
+      }
       const g=params.id?gBy(params.id):null, saved=g?E.saved({...g,currency},store.rates):0;
-      const months=monthly?Math.max(0,Math.ceil((target-(g?.paid||0)-saved)/monthly)):null;
-      preview.textContent=months===null?'Вносьте гроші, коли зручно. Щомісячна сума допоможе порахувати дату.':
-        months===0?'На ціль уже вистачає грошей.':'Якщо відкладати '+money(monthly,currency)+' щомісяця, зберете всю суму приблизно через '+counted(months,{one:'місяць',few:'місяці',many:'місяців'})+'.';
+      const left=Math.max(0,target-(g?.paid||0)-saved);
+      const months=monthly?Math.ceil(left/monthly):null;
+      preview.textContent=left===0?'На ціль уже вистачає грошей.':
+        months===null?'Вносьте гроші, коли зручно. Щомісячна сума допоможе порахувати дату.':
+        months===1?'Залишилось відкласти '+money(Math.round(left),currency)+'. Цього вистачить одного щомісячного внеску.':
+        'Якщо відкладати '+money(monthly,currency)+' щомісяця, зберете всю суму приблизно через '+counted(months,{one:'місяць',few:'місяці',many:'місяців'})+'.';
+      submit.disabled=false;
     } catch(error) { preview.textContent=error.message; }
   }
   function fail(e) { const target=$('account-delete-dialog')?$('delete-error'):$('form-error'); if(target)target.textContent=e.message;else {toast=e.message;render();} }
@@ -988,7 +1006,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
         to===params.id?'Обмін валют записано.':'Переказ записано.');
       return goWithToast('account',{id:params.id,currency:params.currency});
     }
-    if(type==='goal-save'){const changes={name:val('g-name').trim(),icon:val('g-icon'),currency:val('g-currency'),target:amount(val('g-target')),monthly:amount(val('g-monthly')||'0'),auto:$('g-auto').checked};if(!changes.name||!changes.target)throw new Error('Вкажіть назву й додатну суму цілі.');const id=params.id||'g'+(store.sequence+1);if(params.id&&gBy(id).paid&&changes.currency!==gBy(id).currency)throw new Error('Після першої оплати валюту цілі змінити не можна.');if(params.id&&changes.target<(gBy(id).paid||0))throw new Error('Вартість має бути не меншою за вже сплачену суму.');if(params.id)commit({type:'goal-settings',goalId:id,changes},'Ціль оновлено.');else commit({type:'goal-create',goal:{id,...changes,holdings:{},protected:false,status:'active'}},'Ціль створено. Гроші поки не зарезервовані.');return goWithToast('goal',{id});}
+    if(type==='goal-save'){previewGoal();if($('g-monthly').form.querySelector('[type="submit"]').disabled)return;const changes={name:val('g-name').trim(),icon:val('g-icon'),currency:val('g-currency'),target:amount(val('g-target')),monthly:amount(val('g-monthly')||'0'),auto:$('g-auto').checked};if(!changes.name||!changes.target)throw new Error('Вкажіть назву й додатну суму цілі.');const id=params.id||'g'+(store.sequence+1);if(params.id&&gBy(id).paid&&changes.currency!==gBy(id).currency)throw new Error('Після першої оплати валюту цілі змінити не можна.');if(params.id&&changes.target<(gBy(id).paid||0))throw new Error('Вартість має бути не меншою за вже сплачену суму.');if(params.id)commit({type:'goal-settings',goalId:id,changes},'Ціль оновлено.');else commit({type:'goal-create',goal:{id,...changes,holdings:{},protected:false,status:'active'}},'Ціль створено. Гроші поки не зарезервовані.');return goWithToast('goal',{id});}
     if(type==='contribute'){
       const contribution=previewContribution();
       if(!contribution)return;
