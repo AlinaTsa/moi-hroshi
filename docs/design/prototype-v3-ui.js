@@ -7,6 +7,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
   const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); };
   let store = E.seed(false, today()), p, storageWarning = '';
   try { const raw = localStorage.getItem(KEY); if (raw) { const parsed=JSON.parse(raw); if (parsed.schemaVersion === 1 && parsed.base && Array.isArray(parsed.events)) { E.project(parsed); store=parsed; } } } catch (_) { storageWarning='Збереження недоступне або демо пошкоджено. Можна продовжити в цій вкладці.'; }
+  if(!['b','d','e'].includes(store.look))store={...store,look:'b'};
   let route = 'home', params = {}, toast = '', period = 12, overlay = null;
   let lastTab = 'home';
   let toastTimer;
@@ -88,7 +89,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
   function accountCard(a, currency) {
     return '<div class="swipe-account" data-swipe-id="'+a.id+'"><button type="button" class="swipe-trash" data-action="delete-account-dialog" data-id="'+a.id+'" tabindex="-1" aria-hidden="true" aria-label="Видалити рахунок '+esc(a.name)+'"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg></button><button type="button" class="acc swipe-body" data-action="account" data-id="'+a.id+'"><span class="acc-top"><span class="acc-ico" style="background:var(--g'+a.color+')">'+ic(a.type in IC?a.type:'bank',24)+'</span><span class="acc-n"><b>'+esc(a.name)+'</b><small>'+names[a.type]+'</small></span><span class="acc-t">'+shown(E.value(a.balances,store.rates),currency)+'</span></span><span class="chips">'+Object.entries(a.balances).map(([c,n])=>'<span class="cc">'+money(n,c)+'</span>').join('')+'</span></button></div>';
   }
-  function goalPalette(g) { const n={home:1,laptop:1,shoes:2,plane:3,shield:4,car:2}[g.icon]||1; return {ink:'var(--g'+n+')',tint:'var(--t'+n+')'}; }
+  function goalPalette(g) { const n={home:1,laptop:2,phone:5,plane:3,shield:6,car:4,shoes:7}[g.icon]||1; return {ink:'var(--g'+n+')',tint:'var(--t'+n+')'}; }
   function goalCard(g,small) {
     const color=goalPalette(g);
     if (!E.live(g)) { const purchase=p.history.find(e=>!e.void&&['purchase','purchase-credit'].includes(e.type)&&e.goalId===g.id); return '<button type="button" class="goal" data-action="goal" data-id="'+g.id+'"><span class="g-top"><span class="g-ico" style="background:'+color.tint+';color:'+color.ink+'">'+ic(g.icon,26)+'</span><span class="g-name"><b>'+esc(g.name)+'</b><small>'+(purchase?'Куплено за '+money(purchase.amount,purchase.currency):'Кошти повернуто у вільні')+'</small></span><span class="badge">Завершено</span></span></button>'; }
@@ -397,15 +398,15 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
     const g=params.id?gBy(params.id):null;
     const currency=g?.currency||store.currency;
     return header(g?'Редагувати ціль':'Нова ціль',g?'goal':'goals')+form('goal-save',
-      field('g-name','На що збираєте?',g?.name||'','text','required maxlength="60" placeholder="Наприклад, квартира"')+
+      field('g-name','На що хочете назбирати?',g?.name||'','text','required maxlength="60" placeholder="Наприклад, квартира"')+
       (!g?'<div class="quick-comments" aria-label="Приклади цілей">'+['Айфон','Квартира','Дім','Ноутбук','Машина'].map(name=>button(name,'goal-example',name,'pill')).join('')+'</div>':'')+
       '<div class="fld"><span class="currency-caption">Значок цілі</span><input type="hidden" id="g-icon" value="'+esc(g?.icon||'home')+'"><div class="goal-icons" role="group" aria-label="Значок цілі">'+
       Object.entries(goalIcons).map(([id,label])=>button(ic(id,24),'goal-icon',id,'iconbtn','aria-label="'+label+'" aria-pressed="'+((g?.icon||'home')===id)+'"')).join('')+'</div></div>'+
       currencyPicker('g-currency',currencies,currency,'Валюта цілі',true,usedCurrencies())+
-      field('g-target','Скільки потрібно?',g?g.target/100:'','text','inputmode="decimal" required placeholder="Наприклад, 50 000"')+
-      field('g-monthly','Скільки відкладатимете щомісяця?',g?g.monthly/100:'','text','inputmode="decimal" placeholder="Наприклад, 100"')+
+      field('g-target','Скільки хочете назбирати?',g?g.target/100:'','text','inputmode="decimal" required placeholder="Наприклад, 50 000"')+
+      field('g-monthly','Скільки можете відкладати на місяць?',g?g.monthly/100:'','text','inputmode="decimal" placeholder="Наприклад, 100"')+
       '<p class="field-hint" id="g-monthly-error" aria-live="polite"></p>'+
-      toggle('g-auto','Відкладати щомісяця',g?g.auto:true,'Щомісяця відкладаємо з вільних грошей. Якщо зарплата налаштована, спочатку зарахуємо її. Гроші залишаться на рахунках.')+
+      toggle('g-auto','Відкладати автоматично',g?g.auto:true,'Щомісяця позначатимемо вказану суму як відкладену на цю ціль. Якщо ввімкнена автоматична зарплата, спочатку зарахуємо її. Якщо вільних грошей бракує, відкладемо менше.')+
       '<div class="info" id="goal-preview"></div>',g?'Зберегти зміни':'Створити ціль');
   }
   function chooseGoalIcon(icon,manual=false) {
@@ -645,7 +646,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
     }
   }
   function more() {
-    const looks=[['a','А · Синій',['#1F4DB8','#4C74D2','#7FA0E3']],['b','Б · Ніч',['#7FB2FF','#5E8FD6','#335185']],['c','В · Графіт',['#2B2B2B','#8A8885','#1F6F5E']]];
+    const looks=[['b','Темний синій',['#7FB2FF','#8FD6C0','#C3A6F0']],['d','Теплий графіт',['#EBC18B','#A9C9A6','#D6A2B5']],['e','Темна слива',['#C6B5F0','#EDAEC5','#91CFC4']]];
     return header('Ще')+'<div class="sec"><h2>Основна валюта</h2></div><div class="chips">'+[...new Set(['UAH','USD','EUR','GBP',store.currency])].map(c=>button(({USD:'Долар',EUR:'Євро',UAH:'Гривня',GBP:'Фунт'}[c]||currencyName(c))+' '+currencyMark(c),'set-currency',c,'pill','aria-pressed="'+(store.currency===c)+'"')).join('')+'</div><p class="note">Вона підставляється за замовчуванням у нові цілі та використовується для підсумків.</p><div class="list">'+row('Дохід і витрати','Зарплата та щомісячний план',ic('right',18),'go','salary')+row('Курси валют','',ic('right',18),'go','rates')+row('Історія операцій','',ic('right',18),'go','history')+row('Колекція котів','',ic('right',18),'go','cats')+'</div><div class="sec"><h2>Вигляд</h2></div><div class="looks">'+looks.map(([id,n,colors])=>button('<span>'+n+'</span><span class="sws">'+colors.map(c=>'<i style="background:'+c+'"></i>').join('')+'</span>','look',id,'look','aria-pressed="'+(store.look===id)+'"')).join('')+'</div><div class="sec"><h2>Анімації</h2></div><div class="opt">'+toggle('calm-mode','Без руху',store.calm,'Показує зміни без анімації')+'</div><div class="sec"><h2>Спробувати місяць</h2><span>'+dateLabel(store.date)+'</span></div>'+button('Нарахувати цей місяць','process-month','','second')+button('Перейти до наступного місяця','next-month')+'<p class="note">Зарплата та внески виконуються один раз на демо-місяць.</p><div class="sec"><h2>Демо-сценарії</h2></div><div class="demo-grid">'+button('Почати заново','reset','standard','second compact')+button('Без цілей','reset','no-goals','second compact')+button('Нестача коштів','reset','shortage','second compact')+button('Ноутбук за $500','reset','laptop','second compact')+'</div><p class="note">Прототип v3: цифри вигадані, зміни зберігаються лише у власному демо-сховищі. Справжній застосунок не змінюється.</p><a class="note" href="prototype-v2.html">Відкрити попередній прототип v2 ↗</a>';
   }
   function editableRateCodes() {
@@ -802,12 +803,12 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
     monthlyInput.removeAttribute('aria-invalid');
     submit.disabled=true;
     const raw=val('g-target');
-    if(!raw){preview.textContent='Вкажіть вартість і щомісячний внесок, щоб побачити, коли зберете гроші.';return;}
+    if(!raw){preview.textContent='Вкажіть, скільки хочете назбирати й скільки можете відкладати на місяць. Порахуємо, коли зберете всю суму.';return;}
     try {
       const target=amount(raw), monthly=amount(val('g-monthly')||'0'), currency=val('g-currency');
-      if(!target)throw new Error('Вкажіть суму цілі більше нуля.');
+      if(!target)throw new Error('Вкажіть, скільки хочете назбирати — більше нуля.');
       if(monthly>target){
-        hint.textContent='Щомісячний внесок не може перевищувати '+money(target,currency)+' — вартість усієї цілі.';
+        hint.textContent='На місяць можна відкладати не більше '+money(target,currency)+' — це вся сума цілі.';
         monthlyInput.setAttribute('aria-invalid','true');
         monthlyInput.setAttribute('aria-describedby','g-monthly-error');
         preview.textContent='';
@@ -817,8 +818,8 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
       const left=Math.max(0,target-(g?.paid||0)-saved);
       const months=monthly?Math.ceil(left/monthly):null;
       preview.textContent=left===0?'На ціль уже вистачає грошей.':
-        months===null?'Вносьте гроші, коли зручно. Щомісячна сума допоможе порахувати дату.':
-        months===1?'Залишилось відкласти '+money(Math.round(left),currency)+'. Цього вистачить одного щомісячного внеску.':
+        months===null?'Можна відкладати, коли зручно. Для прогнозу вкажіть суму на місяць.':
+        months===1?'Залишилось відкласти '+money(Math.round(left),currency)+'. Вистачить одного щомісячного внеску.':
         'Якщо відкладати '+money(monthly,currency)+' щомісяця, зберете всю суму приблизно через '+counted(months,{one:'місяць',few:'місяці',many:'місяців'})+'.';
       submit.disabled=false;
     } catch(error) { preview.textContent=error.message; }
@@ -1205,6 +1206,10 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
     if(route==='goal-new')previewGoal();
     if(route==='purchase')previewPurchase();
   }catch(e){fail(e);}});
+  window.MonthlyExpenseReminderHost={
+    isReady:()=>!storageWarning,
+    leave:()=>go('accounts')
+  };
   try {
     const saved=JSON.parse(sessionStorage.getItem(VIEW_KEY));
     if(saved&&typeof saved.route==='string'&&saved.params&&typeof saved.params==='object'){
