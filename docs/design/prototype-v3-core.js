@@ -15,6 +15,7 @@
   // Source (CC0): https://github.com/fawazahmed0/exchange-api, 2025-11-17.
   const demoRates = {
     UAH: 1, USD: 42, EUR: 48.5, GBP: 56, PLN: 11.5, CHF: 52, CZK: 1.95, SEK: 4.4, NOK: 4.1, DKK: 6.5, JPY: 0.28, CAD: 30, AUD: 27, USDT: 42,
+    BTC: 3979204, ETH: 130838.2, USDC: 42.00376, SOL: 5813.788, BNB: 39028.96, XRP: 93.73073, TON: 76.47431,
     AED: 11.43925, AFN: 0.6336148, ALL: 0.5052785, AMD: 0.1102596, ANG: 23.32593,
     AOA: 0.04560016, ARS: 0.02981428, AWG: 23.46964, AZN: 24.71215, BAM: 24.93154,
     BBD: 21.00533, BDT: 0.3438227, BGN: 24.93154, BHD: 111.7305, BIF: 0.01424476,
@@ -70,7 +71,8 @@
   function pool(p, rates) { return p.goals.filter(live).reduce((s, g) => s + value(g.holdings, rates), 0); }
   function free(p, rates) { return total(p, rates) - pool(p, rates); }
   function saved(g, rates) { return value(g.holdings, rates) / rates[g.currency]; }
-  function eta(g, rates) { const left = Math.max(0, g.target - saved(g, rates)); return left < .5 ? 0 : g.monthly > 0 && g.status !== 'paused' ? Math.ceil(left / g.monthly) : null; }
+  function goalRemaining(g) { return Math.max(0, g.target - (g.paid || 0)); }
+  function eta(g, rates) { const left = Math.max(0, goalRemaining(g) - saved(g, rates)); return left < .5 ? 0 : g.monthly > 0 && g.status !== 'paused' ? Math.ceil(left / g.monthly) : null; }
   function checkAmount(n, zero) { if (!Number.isSafeInteger(n) || n < (zero ? 0 : 1)) throw new Error('Введіть коректну суму, не більше двох знаків після коми.'); }
   function account(p, id) { const a = p.accounts.find(x => x.id === id); if (!a) throw new Error('Рахунок не знайдено.'); if (a.deleted) throw new Error('Рахунок уже видалено. Нові операції недоступні.'); return a; }
   function goal(p, id) { const g = p.goals.find(x => x.id === id); if (!g) throw new Error('Ціль не знайдено.'); return g; }
@@ -88,7 +90,7 @@
   }
   function contributionLimit(p, rates, g) {
     if (!validRate(rates, g.currency)) throw new Error('Потрібен курс валюти цілі.');
-    const limit = Math.min(free(p, rates), g.target * rates[g.currency] - value(g.holdings, rates));
+    const limit = Math.min(free(p, rates), goalRemaining(g) * rates[g.currency] - value(g.holdings, rates));
     if (!Number.isFinite(limit)) throw new Error('Потрібні курси всіх валют накопичень і рахунків.');
     return Math.max(0, limit);
   }
@@ -139,7 +141,7 @@
   }
   function contribute(p, rates, g, c, amount, cap) {
     checkAmount(amount, true);
-    const need = Math.max(0, (g.target - saved(g, rates)) * rates[g.currency] / rates[c]);
+    const need = Math.max(0, (goalRemaining(g) - saved(g, rates)) * rates[g.currency] / rates[c]);
     const n = Math.min(amount, Math.max(0, Math.floor(need + .000001)));
     const available = Math.min(reserveFree(p, c), Math.max(0, Math.floor(free(p, rates) / rates[c] + .000001)));
     if (n > available && !cap) throw new Error('Недостатньо вільних грошей у цій валюті. Зменште внесок або змініть валюту.');
@@ -171,6 +173,56 @@
     }
   }
   function cover(p, rates, record) { releaseProportional(p, rates, Math.max(0, -free(p, rates)), record); }
+  function paymentEquivalent(amount, currency, g, rates) {
+    if (!validRate(rates, currency) || !validRate(rates, g.currency)) throw new Error('Потрібні курси валют платежу та цілі.');
+    const converted = Math.round(amount * rates[currency] / rates[g.currency]);
+    checkAmount(converted, amount === 0);
+    return converted;
+  }
+  function validatePurchasePayment(p, rates, g, e, allowZero) {
+    checkAmount(e.amount, allowZero);
+    if (!live(g)) throw new Error('Ціль уже завершена. Повторна покупка недоступна.');
+    const principal = paymentEquivalent(e.amount, e.currency, g, rates);
+    const paymentValue = e.amount * rates[e.currency];
+    const available = free(p, rates) + value(g.holdings, rates);
+    if (paymentValue > 0 && (!Number.isFinite(available) || paymentValue > available + .001)) throw new Error('Для покупки не вистачає накопичень цієї цілі та вільних грошей.');
+    return { principal, paymentValue };
+  }
+  function releaseForGoalPayment(g, rates, paymentValue) {
+    const reserve = value(g.holdings, rates), released = {};
+    if (paymentValue <= 0 || reserve <= 0) return released;
+    const wanted = Math.min(paymentValue, reserve), ratio = wanted / reserve;
+    let actual = 0;
+    for (const [code, units] of Object.entries(g.holdings)) {
+      const n = Math.min(units, floorMinor(units * ratio));
+      if (!n) continue;
+      released[code] = n; actual += n * rates[code];
+    }
+    // A rounding surplus becomes free money rather than an unfunded reservation.
+    const codes = Object.keys(g.holdings).sort((a, b) => rates[a] - rates[b] || a.localeCompare(b));
+    for (const code of codes) {
+      if (actual >= wanted) break;
+      const remaining = g.holdings[code] - (released[code] || 0);
+      const n = Math.min(remaining, Math.ceil((wanted - actual) / rates[code]));
+      if (!n) continue;
+      released[code] = (released[code] || 0) + n; actual += n * rates[code];
+    }
+    for (const [code, units] of Object.entries(released)) g.holdings[code] -= units;
+    return released;
+  }
+  function validatePaymentDate(date) {
+    if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('Вкажіть коректну дату платежу.');
+    const parsed = new Date(date + 'T12:00:00Z');
+    if (!Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date) throw new Error('Вкажіть коректну дату платежу.');
+    return date;
+  }
+  function advancePaymentDate(date) {
+    validatePaymentDate(date);
+    const [year, month, day] = date.split('-').map(Number);
+    const nextYear = month === 12 ? year + 1 : year, nextMonth = month === 12 ? 1 : month + 1;
+    const lastDay = new Date(Date.UTC(nextYear, nextMonth, 0)).getUTCDate();
+    return nextYear + '-' + String(nextMonth).padStart(2, '0') + '-' + String(Math.min(day, lastDay)).padStart(2, '0');
+  }
   function project(store) {
     const p = clone(store.base); p.history = [];
     const displayRates = store.rates;
@@ -178,7 +230,7 @@
     const totals = new Map();
     for (const e of activeEvents.filter(e => e.type === 'month-total')) totals.set(e.account + '|' + e.currency + '|' + e.month, e);
     const detailTotals = {};
-    activeEvents.filter(e => (e.type === 'expense' && !e.standalone) || e.type === 'purchase' || (e.type === 'balance' && e.asExpense && e.expenseAmount > 0)).forEach(e => {
+    activeEvents.filter(e => (e.type === 'expense' && !e.standalone) || ['purchase', 'purchase-part', 'purchase-credit', 'debt-payment'].includes(e.type) || (e.type === 'balance' && e.asExpense && e.expenseAmount > 0)).forEach(e => {
       const k = e.account + '|' + e.currency + '|' + e.date.slice(0, 7);
       detailTotals[k] = (detailTotals[k] || 0) + (e.type === 'balance' ? e.expenseAmount : e.amount);
     });
@@ -221,6 +273,10 @@
       } else if (e.type === 'contribute-mixed') {
         r.actual = applyMixedContribution(p, rates, goal(p, e.goalId), e.currency, e.amounts);
         if (!p.cats.includes('persist')) p.cats.push('persist');
+      } else if (e.type === 'goal-unreserve') {
+        const g = goal(p, e.goalId);
+        if (!live(g)) throw new Error('Ціль уже завершена.');
+        r.released = clone(g.holdings); g.holdings = {}; g.auto = false;
       } else if (e.type === 'goal-release') {
         const g = goal(p, e.goalId); g.holdings = {}; g.status = 'archived';
       } else if (e.type === 'purchase') {
@@ -228,8 +284,45 @@
         if (!live(g)) throw new Error('Ціль уже завершена. Повторна покупка недоступна.');
         const priorSaved = value(g.holdings, rates); const available = free(p, rates) + priorSaved;
         if (e.amount * rates[e.currency] > available + .001) throw new Error('Для покупки не вистачає накопичень цієї цілі та вільних грошей.');
+        if (g.paid > 0) g.paid += paymentEquivalent(e.amount, e.currency, g, rates);
         change(a, e.currency, -e.amount); g.holdings = {}; g.status = 'done'; r.delta = -e.amount;
         if (!p.cats.includes('first')) p.cats.push('first');
+      } else if (e.type === 'purchase-part') {
+        const g = goal(p, e.goalId), a = account(p, e.account);
+        const payment = validatePurchasePayment(p, rates, g, e, false);
+        if (payment.principal > goalRemaining(g)) throw new Error('Часткова оплата перевищує неоплачену суму цілі.');
+        change(a, e.currency, -e.amount);
+        r.released = releaseForGoalPayment(g, rates, payment.paymentValue);
+        g.paid = (g.paid || 0) + payment.principal; r.principal = payment.principal; r.delta = -e.amount;
+        if (goalRemaining(g) === 0) {
+          g.status = 'done'; g.auto = false; g.holdings = {};
+          if (!p.cats.includes('first')) p.cats.push('first');
+        }
+      } else if (e.type === 'purchase-credit') {
+        const g = goal(p, e.goalId), a = account(p, e.account);
+        const payment = validatePurchasePayment(p, rates, g, e, true);
+        checkAmount(e.debtAmount); checkAmount(e.monthlyPayment);
+        validatePaymentDate(e.firstPayment);
+        change(a, e.currency, -e.amount);
+        r.released = clone(g.holdings); g.holdings = {}; g.auto = false; g.status = 'done';
+        g.paid = (g.paid || 0) + payment.principal;
+        g.debt = { remaining: e.debtAmount, monthlyPayment: e.monthlyPayment, nextPayment: e.firstPayment, currency: g.currency };
+        r.principal = payment.principal; r.delta = -e.amount;
+        if (!p.cats.includes('first')) p.cats.push('first');
+      } else if (e.type === 'debt-payment') {
+        const g = goal(p, e.goalId), a = account(p, e.account);
+        if (!g.debt || g.debt.remaining <= 0) throw new Error('За цією ціллю немає непогашеного боргу.');
+        checkAmount(e.amount);
+        const principal = paymentEquivalent(e.amount, e.currency, g, rates);
+        if (e.principal !== undefined && e.principal !== principal) throw new Error('Основна сума платежу має дорівнювати платежу за курсом операції.');
+        if (principal > g.debt.remaining) throw new Error('Платіж перевищує залишок боргу.');
+        const nextPayment = e.nextPayment === undefined ? advancePaymentDate(g.debt.nextPayment) : validatePaymentDate(e.nextPayment);
+        change(a, e.currency, -e.amount);
+        g.debt.remaining -= principal; g.paid = (g.paid || 0) + principal;
+        r.principal = principal; r.delta = -e.amount;
+        if (g.debt.remaining === 0) g.debt = null;
+        else g.debt.nextPayment = nextPayment;
+        cover(p, rates, r.cover);
       } else if (e.type === 'account-remove') {
         const a = account(p, e.account);
         if (e.mode !== 'transfer' && e.mode !== 'remove') throw new Error('Оберіть спосіб видалення рахунку.');
@@ -261,7 +354,7 @@
         if (s && s.auto) { change(account(p, s.account), s.currency, s.amount); r.salary = clone(s); }
         const active = p.goals.filter(g => g.status === 'active' && g.auto && g.monthly > 0);
         // Same monthly run: distribute limited free funds proportionally to requests.
-        const requests = active.map(g => ({ g, amount: Math.min(g.monthly, Math.max(0, Math.floor(g.target - saved(g, rates)))) }));
+        const requests = active.map(g => ({ g, amount: Math.min(g.monthly, Math.max(0, Math.floor(goalRemaining(g) - saved(g, rates)))) }));
         const demand = requests.reduce((n, x) => n + x.amount * rates[x.g.currency], 0);
         const ratio = demand ? Math.min(1, Math.max(0, free(p, rates)) / demand) : 0;
         for (const x of requests) {
@@ -320,5 +413,5 @@
     project(next); return next;
   }
   function nextMonth(date) { const [y, m] = date.split('-').map(Number); return (m === 12 ? y + 1 : y) + '-' + String(m === 12 ? 1 : m + 1).padStart(2, '0') + '-05'; }
-  return { seed, clone, project, append, edit, value, total, pool, free, saved, eta, reserveFree, planContribution, nextMonth, live };
+  return { seed, clone, project, append, edit, value, total, pool, free, saved, goalRemaining, eta, reserveFree, planContribution, nextMonth, live };
 });

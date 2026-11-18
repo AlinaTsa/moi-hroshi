@@ -12,6 +12,7 @@
   function ic(n, s, st) { return '<svg width="' + (s || 22) + '" height="' + (s || 22) + '" viewBox="0 0 24 24" fill="none" stroke="' + (st || 'currentColor') + '" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + IC[n] + '</svg>'; }
 
   /* ---------- cats (vector) ---------- */
+  IC.phone = '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M10 18h4"/>';
   var CATS = {
     first: { n: 'Кошеня-Зірочка', r: 'c', story: 'Крихітне кошеня, яке тримає зірку, що світиться. Воно з’являється, коли ви вперше доводите ціль до кінця.' },
     persist: { n: 'Кіт-Монетка', r: 'c', story: 'Уперто тягне важку чарівну монету. Любить, коли вносять частинами й не пропускають місяців.' },
