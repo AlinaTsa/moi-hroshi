@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src https://api.monobank.ua; base-uri 'none'; form-action 'none'; object-src 'none'"><meta name="robots" content="noindex"><meta name="theme-color" content="#F3F4F6"><title>Мої гроші · прототип v4</title><style>
+<html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="robots" content="noindex"><meta name="theme-color" content="#111018"><title>Мої гроші · прототип 4 · компактний вигляд</title><style>
 @font-face{font-family:"Onest";font-style:normal;font-weight:400;font-display:swap;src:url("prototype-v3-onest-400.ttf") format("truetype");}
 @font-face{font-family:"Onest";font-style:normal;font-weight:500;font-display:swap;src:url("prototype-v3-onest-500.ttf") format("truetype");}
 @font-face{font-family:"Onest";font-style:normal;font-weight:600;font-display:swap;src:url("prototype-v3-onest-600.ttf") format("truetype");}
@@ -293,54 +293,42 @@
   .goal-confirm button{width:100%;margin-top:10px}
   .purchase-options{display:grid;gap:12px}
 
-#bank-panel *{box-sizing:border-box}#bank-panel body-unused{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,sans-serif}#bank-panel main{max-width:480px;margin:auto;padding:24px 20px 40px}#bank-panel h1{font-size:24px}#bank-panel h2{font-size:20px}#bank-panel h3{font-size:16px;margin:0}#bank-panel p{line-height:1.5}#bank-panel a{color:var(--accent)}#bank-panel .note,#bank-panel small{font-size:14px;color:var(--muted)}#bank-panel .card{padding:16px;border-radius:18px;background:var(--card);margin:16px 0}#bank-panel label{display:block;margin:16px 0 8px}#bank-panel input,#bank-panel select,#bank-panel button{font:inherit;color:inherit;min-height:48px;border-radius:14px;width:100%;padding:12px;border:1px solid var(--line);background:var(--card)}#bank-panel button{cursor:pointer;margin-top:10px}#bank-panel button.primary{background:var(--accent);color:var(--bg);border:0;font-weight:600}#bank-panel button:disabled{opacity:.5;cursor:default}#bank-panel [hidden]{display:none!important}#bank-panel .row{display:flex;justify-content:space-between;align-items:start;gap:14px;padding:12px 0}#bank-panel .row span{min-width:0;overflow-wrap:anywhere}#bank-panel .row b{white-space:nowrap}#bank-panel .row small{display:block;margin-top:5px}#bank-panel .error{color:var(--bad)}#bank-panel #status{min-height:24px}#bank-panel .total{font-size:28px;font-weight:600}#bank-panel .summary{display:grid;grid-template-columns:1fr 1fr;gap:12px}#bank-panel .summary strong{display:block;margin-top:6px}#bank-panel input:focus-visible,#bank-panel select:focus-visible,#bank-panel button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}#bank-panel .operation{border-top:1px solid var(--line);padding-bottom:14px}#bank-panel .operation:first-child{border-top:0}#bank-panel .operation button{min-height:40px;font-size:14px}#bank-panel .tag{display:inline-block;font-size:13px;padding:5px 8px;background:var(--soft);border-radius:8px}#bank-panel .check{display:flex;gap:10px;align-items:center}#bank-panel .check input{width:20px;min-height:20px;flex:none}#bank-panel .tools{display:flex;gap:8px}#bank-panel .tools>*{flex:1}#bank-panel .wallet-row{display:flex;justify-content:space-between;gap:12px;padding:8px 0}#bank-panel .wallet-row b{white-space:nowrap}#bank-panel dialog{width:min(calc(100% - 24px),456px);max-height:90dvh;overflow-y:auto;border:1px solid var(--line);border-radius:24px;padding:20px;background:var(--card);color:var(--ink)}#bank-panel dialog::backdrop{background:#0009}#bank-panel dialog h2{margin:0 0 12px}#bank-panel .close{float:right;width:44px;margin-top:-8px;border:0;background:transparent;font-size:24px}#bank-panel .suggestion{font-size:14px;color:var(--accent);margin:4px 0}#bank-panel .ledger-item{padding:12px 0;border-top:1px solid var(--line)}#bank-panel .ledger-item button{min-height:36px;font-size:13px}#bank-panel details>summary{padding:12px 0;cursor:pointer}
-  [hidden]{display:none!important}
-  #bank-panel{flex:1;min-width:0;width:100%;min-height:0;overflow:auto;padding-bottom:16px}
-  #bank-panel main{width:100%;min-width:0;max-width:100%;padding:16px 20px 30px;overflow-wrap:anywhere}
-  #bank-panel h1{margin:14px 0}
-  #bank-panel dialog{position:fixed}
-  #bank-panel #status{font-size:14px}
-  #bank-panel .primary{color:var(--on-accent)}
-  #bank-panel .card{border:1px solid var(--line)}
-  #bank-panel #bank-back{border:0;width:auto;background:transparent;padding:0;color:var(--accent)}
-  #bank-panel input,#bank-panel select,#bank-panel button{font-size:15px;min-width:0;max-width:100%}
-  #bank-panel .row,#bank-panel .wallet-row{min-width:0;max-width:100%}
-  #bank-panel .tools>*{min-width:0}
+  [data-look="b"]{--g5:#E7A9C3;--t5:#3A2734;--g6:#7FD1D4;--t6:#1B343B;--g7:#EEAE91;--t7:#3A2A24;--g8:#AEBFFA;--t8:#282E46}
+  [data-look="d"]{
+    --bg:#171614;--card:#22211E;--ink:#F1EDE6;--muted:#B7B0A5;--line:#39352F;--track:#423D35;
+    --accent:#EBC18B;--on-accent:#20180F;--good:#A9C9A6;--bad:#EEA599;--warn:#EBC18B;--warn-bg:#382D20;
+    --p1:#EBC18B;--p2:#CAAA7A;--p3:#A48E68;--p4:#817251;--p5:#62583E;
+    --g1:#B3C7ED;--t1:#29313C;--g2:#A9C9A6;--t2:#2B352B;--g3:#EBC18B;--t3:#3B3023;--g4:#C6B0DC;--t4:#342B3C;
+    --g5:#D6A2B5;--t5:#3B2B32;--g6:#9FCAC5;--t6:#263632;--g7:#E3AB8E;--t7:#3B2C24;--g8:#C6C48E;--t8:#35351F;--soft:#2B2925;--sel:#383025;
+  }
+  [data-look="e"]{
+    --bg:#18141E;--card:#241E2C;--ink:#F0EAF5;--muted:#B5A9C1;--line:#3B3046;--track:#45394F;
+    --accent:#C6B5F0;--on-accent:#20162C;--good:#91CFC4;--bad:#EEA3B4;--warn:#E6C692;--warn-bg:#3A2E27;
+    --p1:#C6B5F0;--p2:#AA96D3;--p3:#8F79B6;--p4:#715A96;--p5:#55416F;
+    --g1:#AFBFF3;--t1:#293044;--g2:#91CFC4;--t2:#243835;--g3:#E6C692;--t3:#3B3026;--g4:#C6B5F0;--t4:#352A47;
+    --g5:#EDAEC5;--t5:#412A3B;--g6:#94CEDA;--t6:#253640;--g7:#E8B19D;--t7:#3E2D2A;--g8:#BBCE9C;--t8:#303827;--soft:#2E2636;--sel:#3A2E49;
+  }
   .monthly-reminder{width:min(calc(100% - 32px),440px);padding:24px;border:0;border-radius:24px;background:var(--card);color:var(--ink)}
   .monthly-reminder::backdrop{background:#0008}
   .monthly-reminder h2{margin:0 0 14px}
   .monthly-reminder button{width:100%;margin-top:14px}
-</style></head><body data-look="a"><div class="app"><main id="view"></main><section id="bank-panel" hidden><main>
-<button id="bank-back" type="button" data-action="go" data-id="accounts">← Рахунки</button>
-<h1>monobank</h1>
-<p class="note">Підключіть рахунки, перевірте операції та звірте залишки з v4.</p>
-<form id="connect-form" autocomplete="off">
-<label for="token">Токен monobank</label>
-<input id="token" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" required placeholder="Вставте токен">
-<button class="primary" id="connect" type="submit">Підключити</button>
-<p class="note">Токен передається безпосередньо monobank і залишається в пам’яті цієї вкладки до відключення або оновлення сторінки.</p>
-<a href="https://api.monobank.ua/" target="_blank" rel="noopener noreferrer">Отримати токен у monobank</a>
-</form>
-<button id="demo" type="button">Спробувати на прикладі без токена</button>
-<p id="status" role="status" aria-live="polite"></p>
-<section id="connected" hidden>
-<button id="disconnect" type="button">Відключити й очистити екран</button>
-<label for="account">Рахунок monobank</label><select id="account"></select>
-<div class="card"><div class="note">Залишок за даними банку</div><div class="total" id="balance"></div><p class="note" id="credit"></p><p class="note" id="checked"></p>
-<label class="check"><input id="shared-account" type="checkbox">Це спільний рахунок</label>
-<div id="share-field" hidden><label for="share">Моя частка спільних витрат</label><select id="share"><option value="5000">50%</option><option value="2500">25%</option><option value="7500">75%</option><option value="10000">100%</option></select><p class="note">Частку застосуємо до витрат, які ви позначите спільними. Особисті перекази залишаються особистими.</p></div>
-</div>
-<button id="sync-account" class="primary" type="button" hidden>Додати або звірити рахунок у v4</button><p id="sync-note" class="note"></p>
-<button id="statement" class="primary" type="button">Показати операції за 30 днів</button>
-<p id="load-note" class="note">Для пошуку переказу завантажте виписки обох рахунків. Між запитами банк просить зачекати хвилину.</p>
-<div id="statement-summary" class="card" hidden><h2>Мої підтверджені операції</h2><div class="summary"><div>Дохід<strong id="income"></strong></div><div>Витрати<strong id="outgoing"></strong></div></div><p class="note" id="unreviewed"></p><p class="note" id="period"></p></div>
-<div id="operations" aria-live="polite"></div>
-<section class="card"><h2>Готівкові гаманці</h2><p class="note">Після підтвердження зняття гроші з’являться у вибраному гаманці. Тут можна записати обмін і витрати готівкою.</p><div id="wallets"></div>
-<div class="tools"><button id="add-wallet" type="button">Додати гаманець</button><button id="exchange" type="button">Обміняти готівку</button></div>
-<button id="cash-expense" type="button">Записати витрату готівкою</button>
-<details><summary>Історія готівки</summary><div id="cash-history"></div></details>
-</section>
-<p class="note">Банківські залишки показано повністю. Особиста частка всього залишку спільної картки потребує початкового розподілу власності. Тут рахуємо лише підтверджені операції.</p>
-</section>
-<dialog id="review-dialog" aria-labelledby="dialog-title"><button id="close-dialog" class="close" type="button" aria-label="Закрити">×</button><h2 id="dialog-title"></h2><form id="review-form"><div id="dialog-fields"></div><p id="dialog-error" class="error" role="alert"></p><button id="dialog-submit" class="primary" type="submit">Зберегти</button></form></dialog>
-</main></section><div id="app-toast" class="toast-v3" role="status"></div><nav class="tabs" id="tabs" aria-label="Розділи"></nav><div id="ov"></div></div><script src="prototype-v4-core.js?v=20261119-v4"></script><script src="prototype-v4-art.js?v=20261119-v4"></script><script src="prototype-v4-bank-core.js?v=20261119-v4"></script><script src="prototype-v4-ui.js?v=20261119-reminder"></script><script src="prototype-v4-review-core.js?v=20261119-v4"></script><script src="prototype-v4-mono.js?v=20261119-v4"></script><script src="prototype-v4-reminder.js?v=20261119-reminder"></script></body></html>
+
+  [data-look="f"]{
+    --bg:#111B18;--card:#1B2925;--ink:#ECF3EB;--muted:#A7BBB0;--line:#30423B;--track:#3B5146;
+    --accent:#A7D6A0;--on-accent:#142016;--good:#8CCFC4;--bad:#E9A69C;--warn:#D7C57F;--warn-bg:#383321;
+    --p1:#A7D6A0;--p2:#8EBB8A;--p3:#759D73;--p4:#5B805D;--p5:#426146;
+    --g1:#A7D6A0;--t1:#293C2B;--g2:#8CCFC4;--t2:#213B37;--g3:#9DBCEB;--t3:#29354A;
+    --g4:#C4AFE4;--t4:#382E45;--g5:#E3B19A;--t5:#443127;--g6:#D7C57F;--t6:#3C3825;
+    --g7:#E6ADC4;--t7:#402D37;--g8:#A9C7CE;--t8:#2B3A40;--soft:#24362E;--sel:#2E4332;
+  }
+  [data-look="g"]{
+    --bg:#1C1714;--card:#2B2421;--ink:#F5EFE9;--muted:#C3B0A3;--line:#453A33;--track:#55483E;
+    --accent:#E7BD91;--on-accent:#25190E;--good:#9FCFC2;--bad:#ECA799;--warn:#DCCD92;--warn-bg:#3C3425;
+    --p1:#E7BD91;--p2:#C7A17A;--p3:#A48665;--p4:#81694F;--p5:#624F3D;
+    --g1:#E7BD91;--t1:#443427;--g2:#9FCFC2;--t2:#293D36;--g3:#ACC2ED;--t3:#30394B;
+    --g4:#CBB6E7;--t4:#3D3047;--g5:#E2AEC1;--t5:#452E39;--g6:#B9CD91;--t6:#353D27;
+    --g7:#E4AA8F;--t7:#483027;--g8:#A9CDDA;--t8:#2B3E45;--soft:#382E28;--sel:#47372C;
+  }
+  .income-schedules .row{padding:12px 0}
+  #r-conversion:empty,#r-validation:empty{display:none}
+</style><link rel="stylesheet" href="prototype-v4-compact.css"><link rel="stylesheet" href="prototype-v4-mystic.css"></head><body data-shell="compact" data-art="mystic" data-look="b"><div class="app"><main id="view"></main><div id="app-toast" class="toast-v3" role="status"></div><nav class="tabs" id="tabs" aria-label="Розділи"></nav><div id="ov"></div></div><script src="prototype-v4-shell-core.js?v=20261118-goal-payments"></script><script src="prototype-v4-shell-art.js?v=20261118-goal-payments"></script><script src="prototype-v4-shell-income-core.js?v=20261119-regular-income"></script><script src="prototype-v4-shell-ui.js?v=20261119-regular-income"></script><script src="prototype-v4-shell-reminder.js?v=20261119-dark-goals"></script><script src="prototype-v4-mystic.js"></script></body></html>

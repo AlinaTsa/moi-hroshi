@@ -1,0 +1,157 @@
+/* Visual shell only. Original v3 DOM, navigation and financial behavior stay intact. */
+body[data-shell="compact"][data-look="b"] {
+  color-scheme: dark;
+  --bg: #111018;
+  --card: #1B1924;
+  --ink: #F2EFF6;
+  --muted: #B2AABB;
+  --line: #302B3C;
+  --track: #37303F;
+  --accent: #AF97DB;
+  --on-accent: #191322;
+  --good: #8FC7B3;
+  --bad: #EDA0A5;
+  --warn: #DABD91;
+  --warn-bg: #29232A;
+  --p1: #AF97DB;
+  --p2: #8FC7B3;
+  --p3: #C8ADD7;
+  --p4: #B8A8D5;
+  --p5: #948AAE;
+  --g1: #B6A0DC; --t1: #2B2439;
+  --g2: #8FC7B3; --t2: #20352F;
+  --g3: #DABD91; --t3: #382E22;
+  --g4: #B5AFE0; --t4: #2D2942;
+  --g5: #D7A9BF; --t5: #392735;
+  --g6: #8FC9C9; --t6: #213337;
+  --g7: #D7AE97; --t7: #382B25;
+  --g8: #ACBCE1; --t8: #282E40;
+  --soft: #25212F;
+  --sel: #30273F;
+}
+body[data-shell="compact"] {
+  font-size: 15px;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+body[data-shell="compact"] #view {
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 16px;
+  gap: 12px;
+}
+body[data-shell="compact"] h1 {font-size: 22px; letter-spacing: -.45px; line-height: 1.25;}
+body[data-shell="compact"] h2 {font-size: 18px; letter-spacing: -.25px; line-height: 1.3;}
+body[data-shell="compact"] .head,
+body[data-shell="compact"] .hdr {gap: 10px; min-height: 44px;}
+body[data-shell="compact"] .hero-row .lbl {font-size: 14px;}
+body[data-shell="compact"] .total {font-size: 34px; line-height: 1.15; letter-spacing: -.8px;}
+body[data-shell="compact"] .total.sm {font-size: 30px;}
+body[data-shell="compact"] .total.xs {font-size: 26px;}
+body[data-shell="compact"] .sub {font-size: 13px; margin-top: 4px; line-height: 1.45;}
+body[data-shell="compact"] .delta {font-size: 13px; margin-top: 6px;}
+body[data-shell="compact"] .note,
+body[data-shell="compact"] .help {font-size: 13px; line-height: 1.5;}
+body[data-shell="compact"] .sec {margin: 2px 1px -3px;}
+body[data-shell="compact"] .card,
+body[data-shell="compact"] .goal,
+body[data-shell="compact"] .acc {
+  border-radius: 15px;
+  padding: 12px 14px;
+  box-shadow: none;
+}
+body[data-shell="compact"] .bar {height: 5px; border-radius: 4px; margin-bottom: 10px;}
+body[data-shell="compact"] .bar span {height: 5px;}
+body[data-shell="compact"] .pl-n {font-size: 12px; gap: 6px; line-height: 1.4;}
+body[data-shell="compact"] .pl-n i {width: 7px; height: 7px; border-radius: 3px;}
+body[data-shell="compact"] .pl-a {font-size: 17px; margin-top: 3px; line-height: 1.25;}
+body[data-shell="compact"] .pl-a.sm {font-size: 15px;}
+body[data-shell="compact"] .big-a {font-size: 20px; margin-top: 3px; line-height: 1.25;}
+body[data-shell="compact"] .big-a.sm {font-size: 18px;}
+body[data-shell="compact"] .two {gap: 9px 12px;}
+body[data-shell="compact"] .acc {gap: 9px;}
+body[data-shell="compact"] .acc-top,
+body[data-shell="compact"] .g-top {gap: 10px;}
+body[data-shell="compact"] .acc-ico,
+body[data-shell="compact"] .g-ico {width: 36px; height: 36px; border-radius: 11px;}
+body[data-shell="compact"] .acc-ico svg,
+body[data-shell="compact"] .g-ico svg {width: 22px; height: 22px;}
+body[data-shell="compact"] .acc-n b,
+body[data-shell="compact"] .g-name b {font-size: 16px; line-height: 1.3;}
+body[data-shell="compact"] .acc-n small,
+body[data-shell="compact"] .g-name small {font-size: 12px; line-height: 1.4;}
+body[data-shell="compact"] .acc-t {font-size: 15px; line-height: 1.3;}
+body[data-shell="compact"] .cc {font-size: 12px; padding: 4px 9px; border-radius: 9px;}
+body[data-shell="compact"] .g-pct {font-size: 18px;}
+body[data-shell="compact"] .trk {height: 6px; margin-top: 10px;}
+body[data-shell="compact"] .trk div {height: 6px; border-radius: 3px;}
+body[data-shell="compact"] .g-bot {font-size: 12px; margin-top: 8px; gap: 8px; line-height: 1.4;}
+body[data-shell="compact"] .g-bot .when {gap: 4px; font-weight: 400;}
+body[data-shell="compact"] .g-bot svg {width: 13px; height: 13px;}
+body[data-shell="compact"] .tabs {background: var(--bg);}
+body[data-shell="compact"] .tab {min-height: 52px; font-size: 10px; gap: 3px;}
+body[data-shell="compact"] .tab svg {width: 22px; height: 22px;}
+body[data-shell="compact"] .back,
+body[data-shell="compact"] .iconbtn {border-radius: 14px;}
+body[data-shell="compact"] .cur-btn {font-size: 15px;}
+body[data-shell="compact"] .primary,
+body[data-shell="compact"] .second,
+body[data-shell="compact"] .ghost {min-height: 46px; border-radius: 13px; font-size: 15px;}
+body[data-shell="compact"] .pill {min-height: 44px; border-radius: 14px; padding-inline: 13px; font-size: 14px;}
+body[data-shell="compact"] .quick-currencies .pill,
+body[data-shell="compact"] .quick-comments .pill {min-height: 44px; font-size: 13px;}
+body[data-shell="compact"] .qa button {min-height: 62px; padding: 8px 2px; border-radius: 13px; font-size: 11px; gap: 5px;}
+body[data-shell="compact"] .qa svg {width: 21px; height: 21px;}
+body[data-shell="compact"] .bal,
+body[data-shell="compact"] .scroll-x {margin-inline: -16px; padding-inline: 16px;}
+body[data-shell="compact"] .bal button {min-width: 106px; padding: 9px 12px; border-radius: 13px;}
+body[data-shell="compact"] .bal b {font-size: 16px;}
+body[data-shell="compact"] .list {border-radius: 15px; padding-inline: 14px;}
+body[data-shell="compact"] .row {min-height: 52px; font-size: 15px; gap: 10px;}
+body[data-shell="compact"] .row .l {gap: 10px;}
+body[data-shell="compact"] .row .l small,
+body[data-shell="compact"] .row .r small {font-size: 12px;}
+body[data-shell="compact"] .tx-i {width: 32px; height: 32px; border-radius: 11px;}
+body[data-shell="compact"] .form {gap: 12px;}
+body[data-shell="compact"] .inp {height: 48px; border-radius: 13px; padding-inline: 13px; font-size: 16px;}
+body[data-shell="compact"] textarea.inp {height: auto; min-height: 90px;}
+body[data-shell="compact"] .big-inp {height: 56px; font-size: 26px; border-radius: 14px;}
+body[data-shell="compact"] .movement-picker>summary {min-height: 48px;}
+body[data-shell="compact"] .movement-comment {font-size: 16px; padding: 11px 13px;}
+body[data-shell="compact"] .currency-caption,
+body[data-shell="compact"] .currency-field legend {font-size: 13px;}
+body[data-shell="compact"] .transfer-block {gap: 10px;}
+body[data-shell="compact"] .transfer-source {font-size: 18px;}
+body[data-shell="compact"] .pv {border-radius: 15px; padding: 4px 14px;}
+body[data-shell="compact"] .pv .r2 {font-size: 14px; padding-block: 8px;}
+body[data-shell="compact"] .opt {min-height: 52px; border-radius: 13px; padding: 9px 12px; font-size: 15px;}
+body[data-shell="compact"] .look {min-height: 50px; border-radius: 13px; font-size: 15px; padding-inline: 14px;}
+body[data-shell="compact"] .info,
+body[data-shell="compact"] .warn,
+body[data-shell="compact"] .error {font-size: 13px; border-radius: 13px; padding: 11px 13px; line-height: 1.5;}
+body[data-shell="compact"] .warn button {min-height: 44px;}
+body[data-shell="compact"] .chart {border-radius: 15px; padding: 10px 10px 6px;}
+body[data-shell="compact"] .swipe-account {border-radius: 15px;}
+body[data-shell="compact"] .account-delete-dialog {border-radius: 20px 20px 0 0; padding-inline: 16px;}
+body[data-shell="compact"] .goal-confirm,
+body[data-shell="compact"] .monthly-reminder {border-radius: 20px; padding: 20px;}
+body[data-shell="compact"] #app-toast {inset-inline: 16px; max-width: calc(100% - 32px); bottom: calc(64px + env(safe-area-inset-bottom, 0px));}
+body[data-shell="compact"] .toast-v3 {font-size: 13px; border-radius: 13px;}
+@media(max-width:350px) {
+  body[data-shell="compact"] #view {padding-inline: 14px;}
+  body[data-shell="compact"] .card,
+  body[data-shell="compact"] .goal,
+  body[data-shell="compact"] .acc {padding-inline: 12px;}
+  body[data-shell="compact"] .g-top,
+  body[data-shell="compact"] .acc-top {gap: 8px;}
+  body[data-shell="compact"] .g-bot {flex-wrap: wrap;}
+  body[data-shell="compact"] .big-a {font-size: 19px;}
+  body[data-shell="compact"] .acc-t {font-size: 14px;}
+  body[data-shell="compact"] .bal,
+  body[data-shell="compact"] .scroll-x {margin-inline: -14px; padding-inline: 14px;}
+}
+@media(prefers-reduced-motion:reduce) {
+  body[data-shell="compact"] *,
+  body[data-shell="compact"] *::before,
+  body[data-shell="compact"] *::after {animation: none !important; transition: none !important; scroll-behavior: auto !important;}
+}
+/* The original accounts summary sets an inline size; keep the compact scale. */
+body[data-shell="compact"] .total.sm[style] {font-size:30px !important;}
